@@ -973,7 +973,7 @@ function listItemHTML(l) {
   const archiveBtn=!l.inactive?`<button class="list-action-btn archive" onclick="event.stopPropagation();archiveList('${l.id}')" title="Move to Inactive">◽</button>`:'';
   const d=new Date(l.created);
   const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-  return `<div class="list-item ${isActive?'active':''}" onclick="selectList('${l.id}')">
+  return `<div class="list-item ${isActive?'active':''}" ontouchend="event.preventDefault();selectList('${l.id}')" onclick="selectList('${l.id}')">
     <div class="list-item-info">
       <div class="list-item-name">${name}</div>
       <div class="list-item-meta">${l.tasks.length} task${l.tasks.length!==1?'s':''} · ${l.inactive?'Inactive':'Active'} · ${dateStr}</div>
@@ -1035,7 +1035,7 @@ function taskHTML(t, i, list) {
   return `<div class="task-item ${t.done?'done':''}" id="ti_${t.id}" draggable="${!isInactive}" ondragstart="dStart(event,'${t.id}')" ondragover="dOver(event,'${t.id}')" ondrop="dDrop(event,'${t.id}')" ondragleave="dLeave(event)">
     <div class="task-header">
       ${!isInactive?'<span class="drag-handle">⠿</span>':''}
-      <div class="task-chk ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
+      <div class="task-chk ${t.done?'done':''}" ontouchend="event.preventDefault();toggleTask('${t.id}')" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
       <div class="task-body"><div class="task-name">${t.name}</div></div>
       <div class="task-right">
         ${durHtml}
