@@ -4,6 +4,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Daily Planner">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I0ZGNkI2QiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNGRjhFNTMiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTIwIiBmaWxsPSJ1cmwoI2JnKSIvPgogIDx0ZXh0IHg9IjI1NiIgeT0iMzQwIiBmb250LWZhbWlseT0iR2VvcmdpYSwgc2VyaWYiIGZvbnQtc2l6ZT0iMjQwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMTAiPkRQPC90ZXh0Pgo8L3N2Zz4=">
 <title>Daily Planner</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -886,7 +890,11 @@ function getActiveList() {
   return S.lists.find(l=>l.id===S.activeListId) || null;
 }
 
+let _lastSelect = 0;
 function selectList(id) {
+  const now = Date.now();
+  if (now - _lastSelect < 500) return;
+  _lastSelect = now;
   S.activeListId=id;
   save();
   renderSidebar();
@@ -1035,7 +1043,7 @@ function taskHTML(t, i, list) {
   return `<div class="task-item ${t.done?'done':''}" id="ti_${t.id}" draggable="${!isInactive}" ondragstart="dStart(event,'${t.id}')" ondragover="dOver(event,'${t.id}')" ondrop="dDrop(event,'${t.id}')" ondragleave="dLeave(event)">
     <div class="task-header">
       ${!isInactive?'<span class="drag-handle">⠿</span>':''}
-      <div class="task-chk ${t.done?'done':''}" ontouchend="event.preventDefault();toggleTask('${t.id}')" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
+      <div class="task-chk ${t.done?'done':''}" ontouchend="event.preventDefault();event.stopPropagation();toggleTask('${t.id}')" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
       <div class="task-body"><div class="task-name">${t.name}</div></div>
       <div class="task-right">
         ${durHtml}
@@ -1051,13 +1059,17 @@ function chk() { return '<svg width="9" height="9" viewBox="0 0 12 12" fill="non
 function chk8() { return '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,6 4,9 11,3"/></svg>'; }
 
 // ─── TASK ACTIONS ─────────────────────────────────────────
+let _lastToggle = {}; 
 function toggleTask(id) {
+  const now = Date.now();
+  if (_lastToggle[id] && now - _lastToggle[id] < 500) return;
+  _lastToggle[id] = now;
   const list=getActiveList(); if (!list) return;
   const t=list.tasks.find(t=>t.id===id); if (!t) return;
   t.done=!t.done;
-  const now=utc8().toISOString();
-  if (!list.firstTick) list.firstTick=now;
-  if (t.done) list.lastTick=now;
+  const ts=utc8().toISOString();
+  if (!list.firstTick) list.firstTick=ts;
+  if (t.done) list.lastTick=ts;
   save();
   renderTasks();
   updateProgress();
