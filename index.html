@@ -427,6 +427,16 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
     </button>
     <div class="setup-err" id="setupErr"></div>
     <div class="setup-foot">✅ Only one key needed to start. Add the other anytime in Settings.<br>🔒 Keys stored only on your device — never shared.</div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <div class="field-label" style="margin-bottom:8px;">☁️ Restore from Cloud (optional)</div>
+      <input type="text" class="inp" id="sSupabaseUrl" placeholder="https://xxxx.supabase.co" style="margin-bottom:8px;" />
+      <input type="password" class="inp" id="sSupabaseKey" placeholder="Supabase anon key (eyJ...)" style="margin-bottom:8px;" />
+      <button class="setup-go" style="background:var(--blue)" onclick="restoreFromCloud()">
+        <span id="restoreSpin" style="display:none" class="spin"></span>
+        <span id="restoreTxt">↓ Restore My Data</span>
+      </button>
+      <div class="save-ok" id="restoreOk" style="margin-top:6px;"></div>
+    </div>
   </div>
 </div>
 
@@ -777,6 +787,40 @@ function pickAI(ai) {
   setupAI = ai;
   document.getElementById('pickC').classList.toggle('on', ai==='claude');
   document.getElementById('pickD').classList.toggle('on', ai==='deepseek');
+}
+
+async function restoreFromCloud() {
+  const url = document.getElementById('sSupabaseUrl').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('sSupabaseKey').value.trim();
+  const ok = document.getElementById('restoreOk');
+  const spin = document.getElementById('restoreSpin');
+  const txt = document.getElementById('restoreTxt');
+  if (!url || !key) { ok.style.color='var(--red)'; ok.textContent='Enter your Supabase URL and key.'; return; }
+  spin.style.display='inline-block'; txt.textContent='Restoring...'; ok.textContent='';
+  try {
+    // Temporarily set supabase creds to fetch
+    S.supabase = { url, key };
+    const userKey = sbUserKey();
+    const r = await fetch(`${url}/rest/v1/planner_data?user_key=eq.${userKey}&limit=1`, {
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
+    });
+    const rows = await r.json();
+    if (rows?.length && rows[0].data) {
+      const cloudData = JSON.parse(rows[0].data);
+      Object.assign(S, cloudData);
+      S.supabase = { url, key };
+      localStorage.setItem('planner_v4', JSON.stringify(S));
+      ok.style.color='var(--green)'; ok.textContent='✅ Restored! Loading...';
+      spin.style.display='none'; txt.textContent='↓ Restore My Data';
+      setTimeout(() => { showApp(); }, 800);
+    } else {
+      ok.style.color='var(--red)'; ok.textContent='No data found. Check your URL and key.';
+      spin.style.display='none'; txt.textContent='↓ Restore My Data';
+    }
+  } catch(e) {
+    ok.style.color='var(--red)'; ok.textContent='Could not connect. Check your URL and key.';
+    spin.style.display='none'; txt.textContent='↓ Restore My Data';
+  }
 }
 
 async function doSetup() {
