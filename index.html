@@ -677,9 +677,9 @@ function sbHeaders() {
 }
 
 function sbUserKey() {
-  // Use a hash of the AI key as unique user identifier
-  const raw = S.keys.claude || S.keys.deepseek || 'default';
-  return btoa(raw).slice(0, 32);
+  // Use supabase URL as stable unique identifier — same across all devices
+  const raw = S.supabase?.url || 'default';
+  return btoa(raw).slice(0, 32).replace(/[^a-zA-Z0-9]/g, 'x');
 }
 
 async function syncToCloud() {
