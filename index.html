@@ -28,7 +28,7 @@
   --shadow: 0 2px 12px rgba(58,51,48,0.07);
   --shadow-md: 0 4px 24px rgba(58,51,48,0.10);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
 body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--ink); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
 /* ── SETUP ── */
@@ -571,6 +571,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
       <div class="s-row"><label>Supabase URL</label><input type="text" class="s-inp" id="sbUrl" placeholder="https://xxxx.supabase.co" /></div>
       <div class="s-row"><label>Supabase Anon Key</label><input type="password" class="s-inp" id="sbKey" placeholder="eyJ..." /></div>
       <button class="save-btn" onclick="saveSupabase()">Save & Sync</button>
+      <button class="save-btn" style="margin-left:8px;background:var(--blue)" onclick="manualSync()">↻ Sync Now</button>
       <div class="save-ok" id="sbOk"></div>
     </div>
     <div class="s-card">
@@ -672,11 +673,26 @@ async function syncToCloud() {
   try {
     const userKey = sbUserKey();
     const data = JSON.stringify(S);
-    await fetch(`${S.supabase.url}/rest/v1/planner_data`, {
-      method: 'POST',
-      headers: sbHeaders(),
-      body: JSON.stringify({ user_key: userKey, data })
+    // First try to update existing row
+    const check = await fetch(`${S.supabase.url}/rest/v1/planner_data?user_key=eq.${userKey}`, {
+      headers: { 'apikey': S.supabase.key, 'Authorization': 'Bearer ' + S.supabase.key }
     });
+    const existing = await check.json();
+    if (existing?.length > 0) {
+      // Update
+      await fetch(`${S.supabase.url}/rest/v1/planner_data?user_key=eq.${userKey}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'apikey': S.supabase.key, 'Authorization': 'Bearer ' + S.supabase.key },
+        body: JSON.stringify({ data, updated_at: new Date().toISOString() })
+      });
+    } else {
+      // Insert
+      await fetch(`${S.supabase.url}/rest/v1/planner_data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': S.supabase.key, 'Authorization': 'Bearer ' + S.supabase.key },
+        body: JSON.stringify({ user_key: userKey, data })
+      });
+    }
   } catch(e) { /* silent fail — offline */ }
 }
 
@@ -684,35 +700,37 @@ async function syncFromCloud() {
   if (!S.supabase?.url || !S.supabase?.key) return;
   try {
     const userKey = sbUserKey();
-    const r = await fetch(`${S.supabase.url}/rest/v1/planner_data?user_key=eq.${userKey}&order=created_at.desc&limit=1`, {
-      headers: {
-        'apikey': S.supabase.key,
-        'Authorization': 'Bearer ' + S.supabase.key
-      }
+    const r = await fetch(`${S.supabase.url}/rest/v1/planner_data?user_key=eq.${userKey}&limit=1`, {
+      headers: { 'apikey': S.supabase.key, 'Authorization': 'Bearer ' + S.supabase.key }
     });
     const rows = await r.json();
     if (rows?.length && rows[0].data) {
       const cloudData = JSON.parse(rows[0].data);
-      // Use cloud data if it has more lists than local
-      const localLists = S.lists?.length || 0;
-      const cloudLists = cloudData.lists?.length || 0;
-      if (cloudLists >= localLists) {
-        Object.assign(S, cloudData);
-        localStorage.setItem('planner_v4', JSON.stringify(S));
-        renderSidebar();
-        renderCurrentList();
-        renderAnalytics();
-        toast('☁️ Synced from cloud');
-      }
+      // Always use cloud data when syncing from cloud
+      const supabaseCreds = S.supabase; // preserve current device's supabase creds
+      Object.assign(S, cloudData);
+      S.supabase = supabaseCreds; // keep this device's creds
+      localStorage.setItem('planner_v4', JSON.stringify(S));
+      renderSidebar();
+      renderCurrentList();
+      renderAnalytics();
+      toast('☁️ Synced from cloud');
     }
   } catch(e) { /* silent fail */ }
+}
+
+async function manualSync() {
+  const ok = document.getElementById('sbOk');
+  if (!S.supabase?.url || !S.supabase?.key) { ok.style.color='var(--red)'; ok.textContent='Set up Cloud Sync first.'; return; }
+  ok.style.color='var(--ink-dim)'; ok.textContent='Syncing...';
+  await syncToCloud();
+  await syncFromCloud();
+  ok.style.color='var(--green)'; ok.textContent='✅ Synced!';
 }
 
 async function saveSupabase() {
   const url = document.getElementById('sbUrl').value.trim().replace(/\/$/, '');
   const key = document.getElementById('sbKey').value.trim();
-  const ok = document.getElementById('sbOk');
-  if (!url || !key) { ok.style.color='var(--red)'; ok.textContent='Enter both URL and key.'; return; }
   ok.textContent = 'Testing connection...'; ok.style.color = 'var(--ink-dim)';
   try {
     const r = await fetch(`${url}/rest/v1/planner_data?limit=1`, {
