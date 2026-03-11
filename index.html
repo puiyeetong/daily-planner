@@ -687,27 +687,28 @@ async function syncToCloud() {
   try {
     const userKey = sbUserKey();
     const data = JSON.stringify(S);
-    // First try to update existing row
     const check = await fetch(`${S.supabase.url}/rest/v1/planner_data?user_key=eq.${userKey}`, {
       headers: { 'apikey': S.supabase.key, 'Authorization': 'Bearer ' + S.supabase.key }
     });
+    if (!check.ok) { console.error('Supabase check failed:', check.status, await check.text()); return; }
     const existing = await check.json();
     if (existing?.length > 0) {
-      // Update
-      await fetch(`${S.supabase.url}/rest/v1/planner_data?user_key=eq.${userKey}`, {
+      const r = await fetch(`${S.supabase.url}/rest/v1/planner_data?user_key=eq.${userKey}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'apikey': S.supabase.key, 'Authorization': 'Bearer ' + S.supabase.key },
-        body: JSON.stringify({ data, updated_at: new Date().toISOString() })
+        body: JSON.stringify({ data })
       });
+      if (!r.ok) console.error('Supabase PATCH failed:', r.status, await r.text());
     } else {
-      // Insert
-      await fetch(`${S.supabase.url}/rest/v1/planner_data`, {
+      const r = await fetch(`${S.supabase.url}/rest/v1/planner_data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': S.supabase.key, 'Authorization': 'Bearer ' + S.supabase.key },
         body: JSON.stringify({ user_key: userKey, data })
       });
+      if (!r.ok) console.error('Supabase POST failed:', r.status, await r.text());
+      else console.log('Supabase POST ok, userKey:', userKey);
     }
-  } catch(e) { /* silent fail — offline */ }
+  } catch(e) { console.error('syncToCloud error:', e); }
 }
 
 async function syncFromCloud() {
