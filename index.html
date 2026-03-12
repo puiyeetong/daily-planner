@@ -1450,7 +1450,7 @@ function taskHTML(t, i, list) {
     ? `<span class="dur-tag" id="dur_${t.id}" onclick="editDur('${t.id}')" title="Click to edit">${t.duration}m</span>`
     : `<span class="dur-tag">${t.duration}m</span>`;
 
-  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠',documents:'📄'};
+  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠'};
   const tagPill = t.tag
     ? `<span class="tag-pill ${t.tag.toLowerCase().replace(/\s+/g,'-')||'custom'}" onclick="${!isInactive?`changeTaskTag('${t.id}',event)`:''}" title="${isInactive?t.tag:'Click to change tag'}">${tagEmojis[t.tag]||'🏷️'} ${t.tag}</span>`
     : (!isInactive ? `<span class="tag-pill none" onclick="changeTaskTag('${t.id}',event)" title="Add tag">+ tag</span>` : '');
@@ -1692,7 +1692,7 @@ async function organiseTasks() {
 
 function renderConfirmList() {
   const allTags = ['work','admin','wellness','kids','home',...(S.customTags||[]).map(t=>t.name.toLowerCase())];
-  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠',documents:'📄'};
+  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠'};
   document.getElementById('confirmList').innerHTML = pendingTasks.map((t, ti) => `
     <div class="confirm-item">
       <div class="confirm-item-row1">
@@ -1787,7 +1787,7 @@ function getActiveLens() {
 function lensContext() {
   const lens = getActiveLens();
   if (!lens) return null;
-  return `This person defines productive as follows — use this as your lens for ALL analysis:\n"${lens.definition}"\n\nTag meanings: Work=business/client tasks, Admin=paperwork/bills/orders, Wellness=self-care/health, Kids=child-related, Home=household, Documents=paperwork. Custom tags: ${(S.customTags||[]).map(t=>`${t.name}=${t.desc}`).join('; ')||'none'}.`;
+  return `This person defines productive as follows — use this as your lens for ALL analysis:\n"${lens.definition}"\n\nTag meanings: Work=business/client tasks, Admin=paperwork/bills/orders, Wellness=self-care/health, Kids=child-related, Home=household. Custom tags: ${(S.customTags||[]).map(t=>`${t.name}=${t.desc}`).join('; ')||'none'}.`;
 }
 
 function renderAnalytics() {
@@ -2074,8 +2074,8 @@ function changeTaskTag(taskId, event) {
   event.stopPropagation();
   const list = getActiveList(); if (!list || list.inactive) return;
   const t = list.tasks.find(t=>t.id===taskId); if (!t) return;
-  const allTags = ['work','admin','wellness','kids','home','documents',...(S.customTags||[]).map(ct=>ct.name.toLowerCase())];
-  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠',documents:'📄'};
+  const allTags = ['work','admin','wellness','kids','home',...(S.customTags||[]).map(ct=>ct.name.toLowerCase())];
+  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠'};
 
   // Remove any existing dropdown
   document.querySelectorAll('.tag-dropdown-menu').forEach(m=>m.remove());
