@@ -1442,7 +1442,8 @@ function renderTasks() {
     el.innerHTML='<div class="empty-tasks" id="emptyTasks"><div class="ei">✍️</div><p>Type tasks above and hit <strong>✨ Organise</strong><br>or press Enter</p></div>';
     return;
   }
-  el.innerHTML=list.tasks.map((t,i)=>taskHTML(t,i,list)).join('');
+  const sorted = [...list.tasks.filter(t=>!t.done), ...list.tasks.filter(t=>t.done)];
+  el.innerHTML=sorted.map((t,i)=>taskHTML(t,i,list)).join('');
 }
 
 function taskHTML(t, i, list) {
