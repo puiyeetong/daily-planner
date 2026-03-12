@@ -192,8 +192,10 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .task-item:hover { border-color: var(--border2); box-shadow: 0 3px 14px rgba(58,51,48,0.10); }
 .task-item.done { opacity: 0.72; }
 .task-header { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px 6px; }
-.drag-handle { color: var(--ink-faint); cursor: grab; font-size: 0.75rem; margin-top: 2px; flex-shrink: 0; user-select: none; }
-.drag-handle:active { cursor: grabbing; }
+.drag-handle { color: var(--ink-faint); cursor: grab; font-size: 1.3rem; flex-shrink: 0; user-select: none; padding: 0 4px 0 8px; touch-action: none; }
+.drag-handle:active { cursor: grabbing; color: var(--rose); }
+.task-item.dragging { background: var(--surface3); border-color: var(--rose); opacity: 0.5; transform: scale(0.98); }
+.task-item.drag-over { border-color: var(--rose); background: var(--surface2); box-shadow: 0 0 0 2px var(--rose); }
 .task-chk { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 5px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s; }
 .task-item.done .task-chk { background: var(--green); border-color: var(--green); }
 .task-body { flex: 1; min-width: 0; }
@@ -1059,6 +1061,7 @@ function init() {
 
   addBubble('ai', "Hi! I'm your planning assistant. Dump your tasks above and I'll organise them. Ask me anything once your list is ready.");
   renderModePicker();
+  initTouchDrag();
 }
 
 function save() {
@@ -1583,9 +1586,9 @@ function taskHTML(t, i, list) {
 
   return `<div class="task-item ${t.done?'done':''}" id="ti_${t.id}" draggable="${!isInactive}" ondragstart="dStart(event,'${t.id}')" ondragover="dOver(event,'${t.id}')" ondrop="dDrop(event,'${t.id}')" ondragleave="dLeave(event)">
     <div class="task-header">
-      ${!isInactive?'<span class="drag-handle">⠿</span>':''}
       <div class="task-chk ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
       <div class="task-body"><div class="task-name">${t.name}</div></div>
+      ${!isInactive?`<span class="drag-handle" id="dh_${t.id}">⠿</span>`:''}
     </div>
     ${stepsHtml}
     ${addStepBtn}
@@ -1821,6 +1824,70 @@ function dDrop(e,id){
   tasks.splice(toI,0,moved);
   list.tasks=tasks; dragId=null;
   save(); renderTasks();
+}
+
+// ─── TOUCH DRAG (mobile) ──────────────────────────────────
+let touchDragId=null, touchClone=null, touchOverId=null;
+function initTouchDrag() {
+  document.addEventListener('touchstart', e => {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    const item = handle.closest('.task-item');
+    if (!item) return;
+    touchDragId = item.id.replace('ti_','');
+    const rect = item.getBoundingClientRect();
+    // Create visual clone
+    touchClone = item.cloneNode(true);
+    touchClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:0.85;pointer-events:none;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.18);border-radius:10px;`;
+    document.body.appendChild(touchClone);
+    item.style.opacity = '0.3';
+  }, {passive:true});
+
+  document.addEventListener('touchmove', e => {
+    if (!touchDragId) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (touchClone) {
+      touchClone.style.top = (touch.clientY - 30) + 'px';
+      touchClone.style.left = touchClone.style.left; // keep x fixed
+    }
+    // Find which task item we're over
+    touchClone && (touchClone.style.display='none');
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    touchClone && (touchClone.style.display='');
+    const overItem = el?.closest('.task-item');
+    const overId = overItem?.id?.replace('ti_','');
+    if (overId && overId !== touchDragId && overId !== touchOverId) {
+      if (touchOverId) document.getElementById('ti_'+touchOverId)?.classList.remove('drag-over');
+      touchOverId = overId;
+      overItem.classList.add('drag-over');
+    }
+  }, {passive:false});
+
+  document.addEventListener('touchend', e => {
+    if (!touchDragId) return;
+    // Clean up clone
+    if (touchClone) { touchClone.remove(); touchClone=null; }
+    const fromEl = document.getElementById('ti_'+touchDragId);
+    if (fromEl) fromEl.style.opacity='';
+    if (touchOverId) document.getElementById('ti_'+touchOverId)?.classList.remove('drag-over');
+    // Do the reorder
+    if (touchOverId && touchOverId !== touchDragId) {
+      const list = getActiveList();
+      if (list) {
+        const tasks = [...list.tasks];
+        const fromI = tasks.findIndex(t=>t.id===touchDragId);
+        const toI = tasks.findIndex(t=>t.id===touchOverId);
+        if (fromI>=0 && toI>=0) {
+          const [moved] = tasks.splice(fromI,1);
+          tasks.splice(toI,0,moved);
+          list.tasks = tasks;
+          save(); renderTasks();
+        }
+      }
+    }
+    touchDragId=null; touchOverId=null;
+  }, {passive:true});
 }
 
 // ─── LANGUAGE DETECTION ───────────────────────────────────
