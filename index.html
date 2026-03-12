@@ -155,29 +155,29 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
 /* LIST HEADER */
-.list-header { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: var(--surface); }
+.list-header { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: var(--surface); }
 .list-name-input { flex: 1; background: transparent; border: none; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--ink); outline: none; font-weight: 500; }
 .list-name-input::placeholder { color: var(--ink-faint); }
 .list-name-input:focus { color: var(--rose); }
 
 /* BRAIN DUMP */
-.dump-row { padding: 10px 18px 0; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; background: var(--surface); align-items: flex-start; }
-.dump-inp { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 13px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; transition: border-color 0.2s, height 0.15s; resize: none; height: 38px; line-height: 1.4; overflow: hidden; }
-.dump-inp:focus { border-color: var(--rose); height: 70px; }
+.dump-row { padding: 7px 12px 0; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; background: var(--surface); align-items: flex-start; }
+.dump-inp { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 11px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; transition: border-color 0.2s, height 0.15s; resize: none; height: 34px; line-height: 1.4; overflow: hidden; }
+.dump-inp:focus { border-color: var(--rose); height: 60px; }
 .dump-inp::placeholder { color: var(--ink-faint); }
 .org-btn { padding: 9px 14px; border-radius: 10px; border: none; background: var(--rose); color: #fff; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 5px; flex-shrink: 0; height: 38px; }
 .org-btn:hover:not(:disabled) { background: #B5726A; }
 .org-btn:disabled { background: var(--ink-faint); color: var(--surface); cursor: not-allowed; }
 
 /* MANUAL ADD ROW */
-.manual-row { padding: 6px 18px 10px; display: flex; gap: 8px; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; }
+.manual-row { padding: 4px 12px 6px; display: flex; gap: 8px; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; }
 .manual-inp { flex: 1; background: var(--bg); border: 1px dashed var(--border2); border-radius: 10px; padding: 7px 13px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; transition: all 0.2s; }
 .manual-inp:focus { border-color: var(--rose); border-style: solid; background: var(--surface); }
 .manual-inp::placeholder { color: var(--ink-faint); }
 .manual-btn { padding: 7px 14px; border-radius: 10px; border: 1px solid var(--border2); background: transparent; color: var(--ink-dim); font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .manual-btn:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
 .manual-lock-icon { font-size: 0.9rem; opacity: 0.5; flex-shrink: 0; cursor: default; }
-.ai-warning { width: 100%; font-size: 0.66rem; color: var(--ink-faint); padding: 4px 2px 8px; display: flex; align-items: center; gap: 4px; }
+.ai-warning { width: 100%; font-size: 0.62rem; color: var(--ink-faint); padding: 2px 12px 4px; display: flex; align-items: center; gap: 4px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .task-item { position: relative; }
 .task-lock-badge { font-size: 0.65rem; opacity: 0.4; line-height: 1; pointer-events: none; margin-left: 2px; }
 
@@ -188,28 +188,30 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .empty-tasks p { font-size: 0.8rem; line-height: 1.6; }
 
 /* TASK ITEM */
-.task-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: visible; transition: all 0.15s; box-shadow: var(--shadow); }
+.task-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: visible; transition: all 0.15s; box-shadow: var(--shadow); }
 .task-item:hover { border-color: var(--border2); box-shadow: 0 3px 14px rgba(58,51,48,0.10); }
 .task-item.done { opacity: 0.72; }
-.task-header { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px 6px; }
-.drag-handle { color: var(--ink-faint); cursor: grab; font-size: 1.3rem; flex-shrink: 0; user-select: none; padding: 0 4px 0 8px; touch-action: none; }
+.task-inner { display: flex; align-items: stretch; }
+.task-main { flex: 1; min-width: 0; padding: 7px 0 5px 10px; }
+.task-header { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 2px; }
+.drag-handle { color: var(--ink-faint); cursor: grab; font-size: 1.3rem; flex-shrink: 0; user-select: none; padding: 4px 6px; touch-action: none; display: flex; align-items: center; }
 .drag-handle:active { cursor: grabbing; color: var(--rose); }
 .task-item.dragging { background: var(--surface3); border-color: var(--rose); opacity: 0.5; transform: scale(0.98); }
 .task-item.drag-over { border-color: var(--rose); background: var(--surface2); box-shadow: 0 0 0 2px var(--rose); }
-@media (max-width: 600px) {
-  .drag-handle { font-size: 2rem; padding: 0 6px 0 14px; min-width: 48px; display: flex; align-items: center; justify-content: center; }
-}
-.task-chk { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 5px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s; }
+.task-chk { width: 16px; height: 16px; border: 1.5px solid var(--border2); border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: all 0.2s; }
 .task-item.done .task-chk { background: var(--green); border-color: var(--green); }
 .task-body { flex: 1; min-width: 0; }
-.task-name { font-size: 1rem; font-weight: 700; color: var(--ink); line-height: 1.4; }
+.task-name { font-size: 0.9rem; font-weight: 700; color: var(--ink); line-height: 1.3; }
 .task-item.done .task-name { text-decoration: line-through; color: var(--ink-dim); }
-.task-right { display: none; } /* hidden — use task-meta-row instead */
+.task-actions-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 4px 4px 4px 2px; border-left: 1px solid var(--border); background: var(--surface2); border-radius: 0 10px 10px 0; min-width: 36px; }
+.task-tags-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 3px; padding-left: 23px; }
 .task-meta-row { display: flex; align-items: center; gap: 5px; padding: 0 12px 8px 37px; flex-wrap: wrap; }
-.dur-tag { font-size: 0.64rem; color: var(--ink-dim); background: var(--surface2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
-.dur-tag:hover { border-color: var(--rose-dim); color: var(--rose); }
-.dur-input { font-size: 0.64rem; color: var(--rose); background: var(--surface2); border: 1px solid var(--rose-dim); padding: 2px 6px; border-radius: 6px; width: 50px; outline: none; font-family: 'Nunito', sans-serif; }
-.task-del { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.72rem; padding: 2px 4px; transition: all 0.15s; margin-left: auto; }
+.task-right { display: none; }
+.task-move-btn { background: none; border: 1px solid var(--border); color: var(--ink-faint); cursor: pointer; font-size: 0.6rem; padding: 2px 4px; border-radius: 4px; transition: all 0.15s; white-space: nowrap; }
+.task-move-btn:hover, .task-move-btn.active { border-color: var(--rose); color: var(--rose); }
+.task-wa-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; transition: opacity 0.15s; }
+.task-wa-btn:hover { opacity: 0.7; }
+.task-del { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.72rem; padding: 2px 4px; transition: all 0.15s; }
 .task-del:hover { color: var(--red); }
 .task-steps { padding: 0 12px 8px 36px; display: flex; flex-direction: column; gap: 4px; }
 .step-row { display: flex; align-items: flex-start; gap: 7px; }
@@ -578,15 +580,19 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
   #plannerTab { flex-direction: column; }
   .main-area { width: 100%; }
 
-  .task-list { padding: 6px 8px; gap: 5px; }
-  .task-item { border-radius: 10px; }
-  .task-header { padding: 7px 8px 4px; gap: 6px; }
-  .task-name { font-size: 0.92rem; }
-  .task-meta-row { padding: 0 8px 6px 30px; gap: 4px; }
-  .task-steps { padding: 0 8px 6px 30px; gap: 3px; }
-  .dur-tag { font-size: 0.68rem; padding: 2px 6px; }
-  .drag-handle { font-size: 1.7rem; min-width: 40px; }
-  .task-chk { width: 16px; height: 16px; }
+  .task-list { padding: 5px 6px; gap: 4px; }
+  .task-item { border-radius: 8px; }
+  .task-main { padding: 6px 0 4px 8px; }
+  .task-header { gap: 6px; margin-bottom: 1px; }
+  .task-name { font-size: 0.88rem; }
+  .task-tags-row { padding-left: 22px; gap: 3px; margin-top: 2px; }
+  .task-actions-col { min-width: 40px; gap: 1px; }
+  .drag-handle { font-size: 1.6rem; padding: 6px 4px; }
+  .task-steps { padding: 0 6px 4px 22px; }
+  .dur-tag { font-size: 0.65rem; padding: 2px 5px; }
+  .dump-row { padding: 6px 10px 0; }
+  .manual-row { padding: 4px 10px 5px; }
+  .list-header { padding: 7px 10px; }
 
   .dump-area { padding: 10px; }
   .dump-inp { font-size: 0.82rem; min-height: 70px; }
@@ -753,8 +759,8 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
           <span id="orgSpin" style="display:none" class="spin"></span>
           <span id="orgTxt">✨ Organise</span>
         </button>
-        <div class="ai-warning">⚠️ Everything typed here is sent to AI — don't put private info here</div>
       </div>
+      <div class="ai-warning">⚠️ Everything typed here is sent to AI — don't put private info here</div>
       <div class="manual-row" id="manualRow">
         <input class="manual-inp" id="manualInp" placeholder="Add task manually..." onkeydown="if(event.key==='Enter')addManualTask()" />
         <span class="manual-lock-icon" id="manualLockIcon" title="Manual tasks are private — not sent to AI">🔒</span>
@@ -1617,21 +1623,27 @@ function taskHTML(t, i, list) {
     : '';
 
   return `<div class="task-item ${t.done?'done':''}" id="ti_${t.id}" draggable="${!isInactive}" ondragstart="dStart(event,'${t.id}')" ondragover="dOver(event,'${t.id}')" ondrop="dDrop(event,'${t.id}')" ondragleave="dLeave(event)">
-    <div class="task-header">
-      <div class="task-chk ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
-      <div class="task-body"><div class="task-name">${t.name}</div></div>
-      ${!isInactive?`<span class="drag-handle" id="dh_${t.id}">⠿</span>`:''}
-    </div>
-    ${stepsHtml}
-    ${addStepBtn}
-    <div class="task-meta-row">
-      ${tagPill}
-      ${durHtml}
-      ${completedAtHtml}
-      ${moveBtn}
-      ${waBtn}
-      ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private — not sent to AI">🔒</span>' : ''}
-      ${delBtn}
+    <div class="task-inner">
+      <div class="task-main">
+        <div class="task-header">
+          <div class="task-chk ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
+          <div class="task-body"><div class="task-name">${t.name}</div></div>
+        </div>
+        ${stepsHtml}
+        ${addStepBtn}
+        <div class="task-tags-row">
+          ${tagPill}
+          ${durHtml}
+          ${completedAtHtml}
+          ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private — not sent to AI">🔒</span>' : ''}
+        </div>
+      </div>
+      <div class="task-actions-col">
+        ${!isInactive?`<span class="drag-handle" id="dh_${t.id}">⠿</span>`:''}
+        ${waBtn}
+        ${moveBtn}
+        ${delBtn}
+      </div>
     </div>
   </div>`;
 }
