@@ -184,7 +184,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 /* TASK ITEM */
 .task-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: visible; transition: all 0.15s; box-shadow: var(--shadow); }
 .task-item:hover { border-color: var(--border2); box-shadow: 0 3px 14px rgba(58,51,48,0.10); }
-.task-item.done { opacity: 0.4; }
+.task-item.done { opacity: 0.72; }
 .task-header { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px 6px; }
 .drag-handle { color: var(--ink-faint); cursor: grab; font-size: 0.75rem; margin-top: 2px; flex-shrink: 0; user-select: none; }
 .drag-handle:active { cursor: grabbing; }
@@ -585,6 +585,9 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .cp { position: fixed; border-radius: 2px; animation: cf linear forwards; pointer-events: none; z-index: 999; }
 @keyframes cf { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(105vh) rotate(720deg);opacity:0} }
 @keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+@keyframes starPop { 0%{transform:scale(0) rotate(0deg);opacity:1} 60%{transform:scale(1.4) rotate(20deg);opacity:1} 100%{transform:scale(0) rotate(40deg);opacity:0} }
+@keyframes taskSlideDown { from{opacity:1;transform:translateY(0)} to{opacity:0.4;transform:translateY(3px)} }
+.tick-star { position:fixed; pointer-events:none; font-size:1rem; z-index:999; animation: starPop 0.5s ease forwards; }
 
 .spin { width: 11px; height: 11px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: sp 0.7s linear infinite; display: inline-block; }
 .spin-w { border-color: rgba(255,255,255,0.3); border-top-color: white; }
@@ -1569,7 +1572,20 @@ function toggleTask(id) {
   const ts=utc8().toISOString();
   if (t.done) { t.completedAt=ts; if (!list.firstTick) list.firstTick=ts; list.lastTick=ts; }
   else { delete t.completedAt; }
-  save(); renderTasks(); updateProgress(); checkConfetti();
+  save(); updateProgress(); checkConfetti();
+  if (t.done) {
+    tickStarBurst(id);
+    // Update visually immediately — don't wait for renderTasks
+    const taskEl = document.getElementById(`ti_${id}`);
+    const chkEl = document.querySelector(`#ti_${id} .task-chk`);
+    const nameEl = document.querySelector(`#ti_${id} .task-name`);
+    if (chkEl) { chkEl.classList.add('done'); chkEl.innerHTML = chk(); }
+    if (nameEl) nameEl.style.textDecoration = 'line-through';
+    if (taskEl) taskEl.style.opacity = '0.72';
+    setTimeout(() => renderTasks(), 350);
+  } else {
+    renderTasks();
+  }
 }
 
 function toggleStep(taskId, si) {
@@ -1711,6 +1727,28 @@ function getRating(pct, total) {
   return '❤️';
 }
 
+function tickStarBurst(taskId) {
+  const el = document.getElementById(`ti_${taskId}`);
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const stars = ['⭐','✨','💫','⭐','✨'];
+  stars.forEach((s, i) => {
+    const star = document.createElement('div');
+    star.className = 'tick-star';
+    star.textContent = s;
+    const angle = (i / stars.length) * 360;
+    const rad = angle * Math.PI / 180;
+    const dist = 28 + Math.random() * 16;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + 16;
+    star.style.left = (cx + Math.cos(rad) * dist) + 'px';
+    star.style.top = (cy + Math.sin(rad) * dist) + 'px';
+    star.style.animationDelay = (i * 0.05) + 's';
+    document.body.appendChild(star);
+    setTimeout(() => star.remove(), 600);
+  });
+}
+
 function checkConfetti() {
   const list=getActiveList(); if (!list) return;
   const total=list.tasks.length;
@@ -1740,7 +1778,19 @@ function dDrop(e,id){
   save(); renderTasks();
 }
 
-// ─── ORGANISE ─────────────────────────────────────────────
+// ─── LANGUAGE DETECTION ───────────────────────────────────
+function detectLang(text) {
+  return /[\u3400-\u9fff]/.test(text) ? 'chinese' : 'english';
+}
+
+function langInstruction(input) {
+  if (detectLang(input) === 'chinese') {
+    return `CRITICAL LANGUAGE RULE: The input contains Chinese characters. You MUST write ALL task names and steps in Traditional Chinese (繁體中文). Never use Simplified Chinese. Keep any English words that appear in the original as-is.`;
+  }
+  return `CRITICAL LANGUAGE RULE: The input contains NO Chinese characters. You MUST write ALL task names and steps in ENGLISH ONLY. Using any Chinese characters is strictly forbidden. English only, no exceptions.`;
+}
+
+
 async function organiseTasks() {
   const list = getActiveList(); if (!list || list.inactive) return;
   const input = document.getElementById('dumpInp').value.trim();
@@ -1765,9 +1815,10 @@ async function organiseTasks() {
 
   try {
     const allTags = ['work','admin','wellness','kids','home',...(S.customTags||[]).map(t=>t.name.toLowerCase())];
+    const langRule = langInstruction(input);
     const text = await callAI(
-      [{role:'user', content:`Current time (UTC+8): ${timeStr}. Status: ${phase}.\nList context: "${listName}" — use this to understand what the tasks are about and expand abbreviations accordingly.\n\nNew tasks to add: "${input}"\nExisting tasks: ${list.tasks.map(t=>taskDisplayName(t)).join(', ') || 'none'}\n\nAvailable tags: ${allTags.join(', ')}\n\nLANGUAGE RULE: Detect the language and script of the input and use exactly that. If input is in Traditional Chinese (繁體中文), output Traditional Chinese. If input is in Simplified Chinese, output Simplified Chinese. If input is in English, output English. Never translate or change the script.\n\nSTEPS RULE: Simple or easy tasks get 2 steps. Complex or multi-part tasks get 3 steps. Use your judgement — don't force 3 steps onto something simple like drinking water or making a call.\n\nReturn ONLY a raw JSON array of NEW tasks. Each: {id(unique string),name(clear descriptive name max 8 words),duration(number mins),steps(array of 2 or 3 short action strings each max 8 words),done(false),tag(one tag from the available list that best fits)}\n\nBe realistic with durations. Don't duplicate existing tasks.`}],
-      'You are a task organiser. Expand short task names into clear descriptions using list context. Assign the best tag. Match the exact language and script of the user input — never translate. Simple tasks get 2 steps, complex tasks get 3. Return only valid JSON array, nothing else.'
+      [{role:'user', content:`${langRule}\n\nCurrent time (UTC+8): ${timeStr}. Status: ${phase}.\nList context: "${listName}" — use this to understand what the tasks are about and expand abbreviations accordingly.\n\nNew tasks to add: "${input}"\nExisting tasks: ${list.tasks.map(t=>taskDisplayName(t)).join(', ') || 'none'}\n\nAvailable tags: ${allTags.join(', ')}\n\nPer-task language: Each task must be written in the same language as its original words. Mixed tasks (e.g. "收letter") keep the name exactly as typed and use the dominant language for steps.\n\nSTEPS RULE: Simple tasks get 2 steps. Complex tasks get 3. Use judgement.\n\nReturn ONLY a raw JSON array of NEW tasks. Each: {id(unique string),name(clear descriptive name max 8 words),duration(number mins),steps(array of 2 or 3 short action strings each max 8 words),done(false),tag(one tag from the available list that best fits)}\n\nBe realistic with durations. Don't duplicate existing tasks.`}],
+      `${langRule}\n\nYou are a task organiser. Expand short task names into clear descriptions using list context. Assign the best tag. Simple tasks get 2 steps, complex tasks get 3. Return only valid JSON array, nothing else.`
     );
     pendingTasks = JSON.parse(text.replace(/```json|```/g, '').trim());
 
@@ -2340,8 +2391,20 @@ function changeTaskTag(taskId, event) {
 
   document.body.appendChild(menu);
   const rect = event.target.getBoundingClientRect();
-  menu.style.top = (rect.bottom + 4) + 'px';
-  menu.style.left = rect.left + 'px';
+  const menuH = menu.offsetHeight || 220;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  if (spaceBelow < menuH + 8) {
+    // not enough space below — open upward
+    menu.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+    menu.style.top = 'auto';
+  } else {
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.style.bottom = 'auto';
+  }
+  // keep within horizontal bounds
+  const menuW = 170;
+  const left = Math.min(rect.left, window.innerWidth - menuW - 8);
+  menu.style.left = Math.max(8, left) + 'px';
 
   setTimeout(() => {
     const close = (e) => { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
