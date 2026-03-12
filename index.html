@@ -382,6 +382,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .task-move-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
 .task-wa-btn { background: none; border: none; font-size: 0.8rem; cursor: pointer; padding: 2px 3px; opacity: 0.4; transition: opacity 0.15s; }
 .task-wa-btn:hover { opacity: 1; }
+.task-completed-at { font-size: 0.62rem; color: var(--green); font-weight: 600; opacity: 0.8; white-space: nowrap; }
 .list-item.move-target { background: rgba(122,158,194,0.15); border-color: var(--blue) !important; }
 .list-item.move-target .list-item-name { color: var(--blue); }
 
@@ -1487,6 +1488,9 @@ function taskHTML(t, i, list) {
   const isMoving = movingTaskId === t.id;
   const moveBtn = !isInactive ? `<button class="task-move-btn ${isMoving?'active':''}" onclick="startMoveTask('${t.id}')" title="Move to another list">${isMoving?'✕ Cancel':'Move to'}</button>` : '';
   const waBtn = `<button class="task-wa-btn" onclick="shareToWhatsApp('${t.id}')" title="Share to WhatsApp">💬</button>`;
+  const completedAtHtml = t.done && t.completedAt
+    ? `<span class="task-completed-at">✓ ${utc8(new Date(t.completedAt)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`
+    : '';
 
   return `<div class="task-item ${t.done?'done':''}" id="ti_${t.id}" draggable="${!isInactive}" ondragstart="dStart(event,'${t.id}')" ondragover="dOver(event,'${t.id}')" ondrop="dDrop(event,'${t.id}')" ondragleave="dLeave(event)">
     <div class="task-header">
@@ -1499,6 +1503,7 @@ function taskHTML(t, i, list) {
     <div class="task-meta-row">
       ${tagPill}
       ${durHtml}
+      ${completedAtHtml}
       ${moveBtn}
       ${waBtn}
       ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private — not sent to AI">🔒</span>' : ''}
@@ -1517,27 +1522,30 @@ function toggleTask(id) {
   if (_lastToggle[id] && now - _lastToggle[id] < 500) return;
   _lastToggle[id] = now;
   const list=getActiveList(); if (!list) return;
-  if (list.inactive) return; // frozen
+  if (list.inactive) return;
   const t=list.tasks.find(t=>t.id===id); if (!t) return;
   t.done=!t.done;
   const ts=utc8().toISOString();
-  if (!list.firstTick) list.firstTick=ts;
-  if (t.done) list.lastTick=ts;
-  save();
-  renderTasks();
-  updateProgress();
-  checkConfetti();
+  if (t.done) { t.completedAt=ts; if (!list.firstTick) list.firstTick=ts; list.lastTick=ts; }
+  else { delete t.completedAt; }
+  save(); renderTasks(); updateProgress(); checkConfetti();
 }
 
 function toggleStep(taskId, si) {
   const list=getActiveList(); if (!list) return;
-  if (list.inactive) return; // frozen
+  if (list.inactive) return;
   const k=`${taskId}_${si}`;
   list.stepDone[k]=!list.stepDone[k];
   const t=list.tasks.find(t=>t.id===taskId);
   if (t?.steps?.length) {
     const allDone=t.steps.every((_,i)=>list.stepDone[`${taskId}_${i}`]);
-    if (allDone&&!t.done) { t.done=true; const now=utc8().toISOString(); if(!list.firstTick)list.firstTick=now; list.lastTick=now; }
+    if (allDone&&!t.done) {
+      t.done=true;
+      const now=utc8().toISOString();
+      t.completedAt=now;
+      if(!list.firstTick)list.firstTick=now;
+      list.lastTick=now;
+    }
   }
   save(); renderTasks(); updateProgress(); checkConfetti();
 }
@@ -1891,13 +1899,29 @@ function renderAnalytics() {
   const lastTicks = done.filter(l=>l.lastTick).map(l=>new Date(l.lastTick).getHours());
   const avgStart = firstTicks.length ? Math.round(firstTicks.reduce((a,b)=>a+b,0)/firstTicks.length) : null;
   const avgEnd = lastTicks.length ? Math.round(lastTicks.reduce((a,b)=>a+b,0)/lastTicks.length) : null;
+
+  // Per-task completion times from completedAt
+  const allCompletedTasks = done.flatMap(l=>l.tasks.filter(t=>t.done && t.completedAt));
+  const tagHours = {};
+  allCompletedTasks.forEach(t => {
+    const h = new Date(t.completedAt).getHours();
+    const tag = t.tag || 'untagged';
+    if (!tagHours[tag]) tagHours[tag] = [];
+    tagHours[tag].push(h);
+  });
+  const tagInsights = Object.entries(tagHours).map(([tag, hours]) => {
+    const avg = Math.round(hours.reduce((a,b)=>a+b,0)/hours.length);
+    const label = avg < 12 ? `${avg}am` : avg === 12 ? '12pm' : `${avg-12}pm`;
+    return `<strong>${tag}</strong> tasks usually done by ${label}`;
+  }).slice(0,2).join(' · ');
+
   const timePlain = document.getElementById('timePlain');
   if (avgStart !== null && avgEnd !== null) {
     const sessionH = Math.max(0, avgEnd - avgStart);
     const startLabel = avgStart < 12 ? `${avgStart}am` : avgStart === 12 ? '12pm' : `${avgStart-12}pm`;
     const endLabel = avgEnd < 12 ? `${avgEnd}am` : avgEnd === 12 ? '12pm' : `${avgEnd-12}pm`;
     const peak = avgStart <= 10 ? 'morning person 🌅' : avgStart <= 13 ? 'midday starter 🌤' : 'afternoon worker 🌆';
-    timePlain.innerHTML = `You're a <strong>${peak}</strong><br>Usually start around <strong>${startLabel}</strong><br>Usually wrap up by <strong>${endLabel}</strong><br>Average session: <strong>~${sessionH} hour${sessionH!==1?'s':''}</strong>`;
+    timePlain.innerHTML = `You're a <strong>${peak}</strong><br>Usually start around <strong>${startLabel}</strong><br>Usually wrap up by <strong>${endLabel}</strong><br>Average session: <strong>~${sessionH} hour${sessionH!==1?'s':''}</strong>${tagInsights ? `<br><span style="font-size:0.75rem;color:var(--ink-dim);margin-top:4px;display:block">${tagInsights}</span>` : ''}`;
   } else {
     timePlain.innerHTML = '<span style="font-style:italic;color:var(--ink-faint)">Tick tasks to track time patterns</span>';
   }
