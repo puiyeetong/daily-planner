@@ -377,6 +377,15 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .tag-pill.none    { background: var(--surface2); color: var(--ink-faint); border-color: var(--border); }
 
 /* TAG DROPDOWN */
+.project-toggle-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; opacity: 0.4; }
+.project-toggle-btn:hover { opacity: 1; background: var(--surface2); }
+.project-toggle-btn.on { opacity: 1; background: var(--surface2); border-color: var(--rose-dim); }
+.list-item-project { font-size: 0.6rem; background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose-dim); border-radius: 4px; padding: 1px 5px; font-weight: 700; letter-spacing: 0.3px; flex-shrink: 0; }
+.daily-mins-total { font-size: 2rem; font-family: 'Cormorant Garamond', serif; color: var(--rose); font-weight: 600; line-height: 1; }
+.daily-mins-label { font-size: 0.72rem; color: var(--ink-dim); margin-top: 2px; }
+.daily-mins-breakdown { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.daily-mins-tag { font-size: 0.72rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; color: var(--ink-dim); }
+.daily-mins-tag strong { color: var(--ink); }
 .task-move-btn { background: none; border: 1px solid var(--border2); border-radius: 5px; color: var(--ink-dim); font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
 .task-move-btn:hover { background: var(--blue); border-color: var(--blue); color: white; }
 .task-move-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
@@ -483,7 +492,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .cal-nav-btn:hover { background: var(--surface2); color: var(--ink); }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 14px 10px; flex-shrink: 0; }
 .cal-day-label { text-align: center; font-size: 0.62rem; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; padding: 4px 0; }
-.cal-day { min-height: 38px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; position: relative; }
+.cal-day { min-height: 52px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; position: relative; padding: 4px 2px; }
 .cal-day:hover { background: var(--surface2); }
 .cal-day.today { border-color: var(--rose-dim); background: var(--rose-soft); }
 .cal-day.selected { background: var(--rose); border-color: var(--rose); }
@@ -494,6 +503,8 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .cal-day.selected .cal-day-num { color: white; }
 .cal-day.other-month .cal-day-num { color: var(--ink-faint); }
 .cal-dot { width: 5px; height: 5px; border-radius: 50%; }
+.cal-mins { font-size: 0.58rem; color: var(--green); font-weight: 700; margin-top: 3px; line-height: 1; text-align: center; }
+.cal-day.selected .cal-mins { color: rgba(255,255,255,0.9); }
 .cal-list-area { flex: 1; overflow-y: auto; padding: 0 14px 14px; border-top: 1px solid var(--border); }
 .cal-date-heading { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: var(--ink); padding: 12px 0 8px; }
 .cal-list-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
@@ -704,6 +715,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
     <div class="main-area">
       <div class="list-header" id="listHeader">
         <input class="list-name-input" id="listNameInput" placeholder="List name..." onblur="saveListName()" onkeydown="if(event.key==='Enter')this.blur()" />
+        <button class="project-toggle-btn" id="projectToggleBtn" onclick="toggleProjectMode()" title="Toggle project mode">📁</button>
       </div>
       <div class="dump-row">
         <textarea class="dump-inp" id="dumpInp" placeholder="Type tasks... AI will organise and add them to your list" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();organiseTasks()}"></textarea>
@@ -740,6 +752,12 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
   <div class="tab" id="analyticsTab">
     <div id="analyticsEmpty" class="empty-state"><div class="ei">📊</div><p>Archive a few lists to unlock analytics.</p></div>
     <div id="analyticsContent" style="display:none;flex-direction:column;gap:14px;">
+
+      <!-- DAILY MINUTES -->
+      <div class="a-card" id="dailyMinsCard">
+        <div class="a-card-head"><h3>⏱ Minutes Done Today</h3><span class="a-card-sub" id="dailyMinsSub"></span></div>
+        <div id="dailyMinsContent"></div>
+      </div>
 
       <!-- TREND BANNER -->
       <div class="trend-banner" id="trendBanner">
@@ -1394,15 +1412,21 @@ function renderSidebar() {
       return name.includes(q) || taskNames.includes(q);
     });
   }
-  const active = lists.filter(l=>!l.inactive);
+  const projects = lists.filter(l=>l.isProject && !l.inactive);
+  const active = lists.filter(l=>!l.inactive && !l.isProject);
   const inactive = lists.filter(l=>l.inactive);
   let html = '';
+  if (projects.length) {
+    html += `<div class="sidebar-section-label">📁 Projects</div>`;
+    projects.forEach(l=>{ html+=listItemHTML(l); });
+    if (active.length || inactive.length) html += `<div class="sidebar-divider"></div>`;
+  }
   if (active.length) {
     html += `<div class="sidebar-section-label">Active</div>`;
     active.forEach(l=>{ html+=listItemHTML(l); });
   }
   if (inactive.length) {
-    if (active.length) html += `<div class="sidebar-divider"></div>`;
+    if (projects.length || active.length) html += `<div class="sidebar-divider"></div>`;
     html += `<div class="sidebar-section-label">Inactive</div>`;
     inactive.forEach(l=>{ html+=listItemHTML(l); });
   }
@@ -1413,13 +1437,15 @@ function listItemHTML(l) {
   const isActive=l.id===S.activeListId;
   const name=getAutoName(l);
   const rating=l.inactive?`<span class="list-item-rating">${l.rating||''}</span>`:'';
-  const archiveBtn=!l.inactive?`<button class="list-action-btn archive" onclick="event.stopPropagation();archiveList('${l.id}')" title="Move to Inactive">◽</button>`:`<button class="list-action-btn archive" onclick="event.stopPropagation();reactivateList('${l.id}')" title="Reactivate" style="color:var(--green)">↩</button>`;
+  const projectBadge=l.isProject?`<span class="list-item-project">PROJECT</span>`:'';
+  const archiveBtn=!l.inactive&&!l.isProject?`<button class="list-action-btn archive" onclick="event.stopPropagation();archiveList('${l.id}')" title="Move to Inactive">◽</button>`
+    :l.inactive?`<button class="list-action-btn archive" onclick="event.stopPropagation();reactivateList('${l.id}')" title="Reactivate" style="color:var(--green)">↩</button>`:'';
   const d=new Date(l.created);
   const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   return `<div class="list-item ${isActive?'active':''}" onclick="selectList('${l.id}')">
     <div class="list-item-info">
-      <div class="list-item-name">${name}</div>
-      <div class="list-item-meta">${l.tasks.length} task${l.tasks.length!==1?'s':''} · ${l.inactive?'Inactive':'Active'} · ${dateStr}</div>
+      <div class="list-item-name">${name} ${projectBadge}</div>
+      <div class="list-item-meta">${l.tasks.length} task${l.tasks.length!==1?'s':''} · ${l.isProject?'Project':l.inactive?'Inactive':'Active'} · ${dateStr}</div>
     </div>
     ${rating}
     <div class="list-actions">
@@ -1429,7 +1455,16 @@ function listItemHTML(l) {
   </div>`;
 }
 
-// ─── RENDER CURRENT LIST ──────────────────────────────────
+function toggleProjectMode() {
+  const list = getActiveList(); if (!list) return;
+  list.isProject = !list.isProject;
+  save();
+  renderSidebar();
+  renderCurrentList();
+  toast(list.isProject ? '📁 Project mode on — pinned & always active' : 'Project mode off');
+}
+
+
 function renderCurrentList() {
   const list=getActiveList();
   if (!list) return;
@@ -1446,6 +1481,12 @@ function renderCurrentList() {
   if (lockIcon) lockIcon.style.display = S.manualPrivate ? 'inline' : 'none';
   const aiWarn = document.querySelector('.ai-warning');
   if (aiWarn) aiWarn.style.display = isInactive ? 'none' : 'flex';
+
+  const projBtn = document.getElementById('projectToggleBtn');
+  if (projBtn) {
+    projBtn.classList.toggle('on', !!list.isProject);
+    projBtn.title = list.isProject ? 'Project mode ON — click to turn off' : 'Mark as project (pins to top, never archives)';
+  }
 
   renderTasks();
   updateProgress();
@@ -1844,9 +1885,14 @@ function lensContext() {
 
 function renderAnalytics() {
   const done = S.lists.filter(l => l.inactive);
+
+  // ── DAILY MINUTES (always shown, uses all lists including active) ──
+  renderDailyMins();
+
   if (!done.length) {
     document.getElementById('analyticsEmpty').style.display = 'block';
     document.getElementById('analyticsContent').style.display = 'none';
+    document.getElementById('dailyMinsCard').style.display = 'block';
     return;
   }
   document.getElementById('analyticsEmpty').style.display = 'none';
@@ -2552,18 +2598,79 @@ let calSelectedDate = null;
 function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
 function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
 
+function renderDailyMins() {
+  const now = utc8();
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+
+  // Collect all done tasks completed today across all lists
+  const todayTasks = [];
+  S.lists.forEach(l => {
+    l.tasks.forEach(t => {
+      if (t.done && t.completedAt) {
+        const d = utc8(new Date(t.completedAt));
+        const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        if (k === todayKey) todayTasks.push({...t, listName: getAutoName(l)});
+      }
+    });
+  });
+
+  const totalMins = todayTasks.reduce((s,t) => s + (t.duration||0), 0);
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+  // Breakdown by tag
+  const byTag = {};
+  todayTasks.forEach(t => {
+    const tag = t.tag || 'untagged';
+    byTag[tag] = (byTag[tag] || 0) + (t.duration || 0);
+  });
+  const tagBreakdown = Object.entries(byTag)
+    .sort((a,b) => b[1]-a[1])
+    .map(([tag, m]) => `<div class="daily-mins-tag"><strong>${m}m</strong> ${tag}</div>`)
+    .join('');
+
+  const card = document.getElementById('dailyMinsCard');
+  const content = document.getElementById('dailyMinsContent');
+  const sub = document.getElementById('dailyMinsSub');
+
+  if (!card) return;
+  card.style.display = 'block';
+
+  if (totalMins === 0) {
+    sub.textContent = 'today';
+    content.innerHTML = `<div class="daily-mins-total">0m</div><div class="daily-mins-label">No completed tasks recorded yet today — tick tasks to track time</div>`;
+  } else {
+    sub.textContent = `${todayTasks.length} task${todayTasks.length!==1?'s':''} completed`;
+    content.innerHTML = `
+      <div class="daily-mins-total">${timeStr}</div>
+      <div class="daily-mins-label">of focused work done today</div>
+      ${tagBreakdown ? `<div class="daily-mins-breakdown">${tagBreakdown}</div>` : ''}
+    `;
+  }
+}
+
 function renderCalendar() {
   const now = utc8();
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('calMonthLabel').textContent = `${monthNames[calMonth]} ${calYear}`;
 
-  // Build map of date → lists
+  // Build map of date → lists AND minutes done
   const dateMap = {};
+  const dateMins = {};
   S.lists.forEach(l => {
     const d = new Date(l.created);
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     if (!dateMap[key]) dateMap[key] = [];
     dateMap[key].push(l);
+    // Count completed task minutes by completedAt date
+    l.tasks.forEach(t => {
+      if (t.done && t.completedAt) {
+        const cd = utc8(new Date(t.completedAt));
+        const ck = `${cd.getFullYear()}-${cd.getMonth()}-${cd.getDate()}`;
+        dateMins[ck] = (dateMins[ck] || 0) + (t.duration || 0);
+      }
+    });
   });
 
   const firstDay = new Date(calYear, calMonth, 1).getDay();
@@ -2585,9 +2692,12 @@ function renderCalendar() {
     const hasList = !!dateMap[key];
     const isToday = now.getFullYear()===calYear && now.getMonth()===calMonth && now.getDate()===d;
     const isSelected = calSelectedDate && calSelectedDate.y===calYear && calSelectedDate.m===calMonth && calSelectedDate.d===d;
+    const minsToday = dateMins[key] || 0;
+    const minsLabel = minsToday > 0 ? `<div class="cal-mins">${minsToday>=60?Math.floor(minsToday/60)+'h'+(minsToday%60?minsToday%60+'m':''):minsToday+'m'}</div>` : '';
     html += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${hasList?'has-list':''}" ontouchend="event.preventDefault();selectCalDay(${calYear},${calMonth},${d})" onclick="selectCalDay(${calYear},${calMonth},${d})">
       <div class="cal-day-num">${d}</div>
       ${hasList?'<div class="cal-dot"></div>':''}
+      ${minsLabel}
     </div>`;
   }
 
