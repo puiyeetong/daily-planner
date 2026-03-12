@@ -196,6 +196,9 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .drag-handle:active { cursor: grabbing; color: var(--rose); }
 .task-item.dragging { background: var(--surface3); border-color: var(--rose); opacity: 0.5; transform: scale(0.98); }
 .task-item.drag-over { border-color: var(--rose); background: var(--surface2); box-shadow: 0 0 0 2px var(--rose); }
+@media (max-width: 600px) {
+  .drag-handle { font-size: 2rem; padding: 0 6px 0 14px; min-width: 48px; display: flex; align-items: center; justify-content: center; }
+}
 .task-chk { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 5px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s; }
 .task-item.done .task-chk { background: var(--green); border-color: var(--green); }
 .task-body { flex: 1; min-width: 0; }
@@ -1849,8 +1852,21 @@ function initTouchDrag() {
     const touch = e.touches[0];
     if (touchClone) {
       touchClone.style.top = (touch.clientY - 30) + 'px';
-      touchClone.style.left = touchClone.style.left; // keep x fixed
     }
+
+    // Auto-scroll when near edges
+    const scrollEl = document.getElementById('taskList');
+    if (scrollEl) {
+      const rect = scrollEl.getBoundingClientRect();
+      const zone = 80; // px from edge to trigger scroll
+      const speed = 8;
+      if (touch.clientY > rect.bottom - zone) {
+        scrollEl.scrollTop += speed;
+      } else if (touch.clientY < rect.top + zone) {
+        scrollEl.scrollTop -= speed;
+      }
+    }
+
     // Find which task item we're over
     touchClone && (touchClone.style.display='none');
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
