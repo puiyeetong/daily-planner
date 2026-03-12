@@ -191,9 +191,9 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .task-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: visible; transition: all 0.15s; box-shadow: var(--shadow); }
 .task-item:hover { border-color: var(--border2); box-shadow: 0 3px 14px rgba(58,51,48,0.10); }
 .task-item.done { opacity: 0.72; }
-.task-inner { display: flex; align-items: stretch; }
-.task-main { flex: 1; min-width: 0; padding: 7px 0 5px 10px; }
-.task-header { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 2px; }
+.task-inner { display: flex; flex-direction: column; }
+.task-main { flex: 1; min-width: 0; }
+.task-header { display: flex; align-items: flex-start; gap: 7px; padding: 7px 6px 3px 10px; margin-bottom: 0; }
 .drag-handle { color: var(--ink-faint); cursor: grab; font-size: 1.3rem; flex-shrink: 0; user-select: none; padding: 4px 6px; touch-action: none; display: flex; align-items: center; }
 .drag-handle:active { cursor: grabbing; color: var(--rose); }
 .task-item.dragging { background: var(--surface3); border-color: var(--rose); opacity: 0.5; transform: scale(0.98); }
@@ -203,16 +203,20 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .task-body { flex: 1; min-width: 0; }
 .task-name { font-size: 0.9rem; font-weight: 700; color: var(--ink); line-height: 1.3; }
 .task-item.done .task-name { text-decoration: line-through; color: var(--ink-dim); }
-.task-actions-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; padding: 4px 4px 4px 2px; border-left: 1px solid var(--border); background: var(--surface2); border-radius: 0 10px 10px 0; min-width: 36px; }
+.task-actions-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding: 6px 5px; border-left: 1px solid var(--border); background: var(--surface2); border-radius: 0 10px 10px 0; min-width: 42px; }
 .task-tags-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 3px; padding-left: 23px; }
-.task-meta-row { display: flex; align-items: center; gap: 5px; padding: 0 12px 8px 37px; flex-wrap: wrap; }
-.task-right { display: none; }
+.task-meta-row { display: flex; align-items: center; gap: 5px; padding: 2px 8px 6px 30px; flex-wrap: wrap; }
+.task-meta-minimal { padding: 1px 6px 4px; justify-content: flex-end; }
+.dur-tag { font-size: 0.64rem; color: var(--ink-dim); background: var(--surface2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.dur-tag:hover { border-color: var(--rose-dim); color: var(--rose); }
+.dur-input { font-size: 0.64rem; color: var(--rose); background: var(--surface2); border: 1px solid var(--rose-dim); padding: 2px 6px; border-radius: 6px; width: 44px; outline: none; font-family: 'Nunito', sans-serif; }
 .task-move-btn { background: none; border: 1px solid var(--border); color: var(--ink-faint); cursor: pointer; font-size: 0.6rem; padding: 2px 4px; border-radius: 4px; transition: all 0.15s; white-space: nowrap; }
 .task-move-btn:hover, .task-move-btn.active { border-color: var(--rose); color: var(--rose); }
-.task-wa-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 2px 4px; transition: opacity 0.15s; }
+.task-wa-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 1px 2px; transition: opacity 0.15s; line-height: 1; }
 .task-wa-btn:hover { opacity: 0.7; }
-.task-del { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.72rem; padding: 2px 4px; transition: all 0.15s; }
+.task-del { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.72rem; padding: 2px 3px; transition: all 0.15s; }
 .task-del:hover { color: var(--red); }
+.task-completed-at { font-size: 0.6rem; color: var(--ink-faint); white-space: nowrap; }
 .task-steps { padding: 0 12px 8px 36px; display: flex; flex-direction: column; gap: 4px; }
 .step-row { display: flex; align-items: flex-start; gap: 7px; }
 .step-chk { width: 13px; height: 13px; border: 1.5px solid var(--border2); border-radius: 3px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: all 0.2s; }
@@ -406,6 +410,10 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .project-toggle-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; opacity: 0.4; }
 .project-toggle-btn:hover { opacity: 1; background: var(--surface2); }
 .project-toggle-btn.on { opacity: 1; background: var(--surface2); border-color: var(--rose-dim); }
+.task-name-inp { font-size: 0.9rem; font-weight: 700; color: var(--ink); background: var(--surface2); border: 1.5px solid var(--rose); border-radius: 6px; padding: 1px 6px; width: 100%; outline: none; font-family: 'Nunito', sans-serif; line-height: 1.3; }
+.steps-toggle-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 2px 9px; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0; opacity: 0.4; color: var(--ink); line-height: 1; }
+.steps-toggle-btn:hover { opacity: 1; background: var(--surface2); }
+.steps-toggle-btn.on { opacity: 1; background: var(--surface2); border-color: var(--rose-dim); color: var(--rose); transform: rotate(180deg); }
 .list-item-project { font-size: 0.6rem; background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose-dim); border-radius: 4px; padding: 1px 5px; font-weight: 700; letter-spacing: 0.3px; flex-shrink: 0; }
 .daily-mins-total { font-size: 2rem; font-family: 'Cormorant Garamond', serif; color: var(--rose); font-weight: 600; line-height: 1; }
 .daily-mins-label { font-size: 0.72rem; color: var(--ink-dim); margin-top: 2px; }
@@ -582,17 +590,12 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 
   .task-list { padding: 5px 6px; gap: 4px; }
   .task-item { border-radius: 8px; }
-  .task-main { padding: 6px 0 4px 8px; }
-  .task-header { gap: 6px; margin-bottom: 1px; }
+  .task-header { padding: 6px 6px 2px 8px; gap: 6px; }
   .task-name { font-size: 0.88rem; }
-  .task-tags-row { padding-left: 22px; gap: 3px; margin-top: 2px; }
-  .task-actions-col { min-width: 40px; gap: 1px; }
-  .drag-handle { font-size: 1.6rem; padding: 6px 4px; }
-  .task-steps { padding: 0 6px 4px 22px; }
+  .task-meta-row { padding: 2px 6px 5px 28px; gap: 3px; }
+  .task-steps { padding: 0 6px 3px 28px; }
   .dur-tag { font-size: 0.65rem; padding: 2px 5px; }
-  .dump-row { padding: 6px 10px 0; }
-  .manual-row { padding: 4px 10px 5px; }
-  .list-header { padding: 7px 10px; }
+  .drag-handle { font-size: 1.6rem; padding: 2px 4px; }
 
   .dump-area { padding: 10px; }
   .dump-inp { font-size: 0.82rem; min-height: 70px; }
@@ -751,6 +754,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
     <div class="main-area">
       <div class="list-header" id="listHeader">
         <input class="list-name-input" id="listNameInput" placeholder="List name..." onblur="saveListName()" onkeydown="if(event.key==='Enter')this.blur()" />
+        <button class="steps-toggle-btn" id="stepsToggleBtn" onclick="toggleStepsVisibility()" title="Show/hide steps">&#8964;</button>
         <button class="project-toggle-btn" id="projectToggleBtn" onclick="toggleProjectMode()" title="Toggle project mode">📁</button>
       </div>
       <div class="dump-row">
@@ -1017,7 +1021,8 @@ let S = {
   wHours: {start:'10:00', end:'19:00'},
   supabase: {url:'', key:''},
   manualPrivate: true,
-  mode: 'adult_me', // adult_me | adult_staff | kid
+  mode: 'adult_me',
+  stepsVisible: true,
   lists: [],
   activeListId: null,
   records: [],
@@ -1074,6 +1079,7 @@ function init() {
   addBubble('ai', "Hi! I'm your planning assistant. Dump your tasks above and I'll organise them. Ask me anything once your list is ready.");
   renderModePicker();
   initTouchDrag();
+  updateStepsBtn();
 }
 
 function save() {
@@ -1515,6 +1521,19 @@ function listItemHTML(l) {
   </div>`;
 }
 
+function toggleStepsVisibility() {
+  S.stepsVisible = !S.stepsVisible;
+  save();
+  const btn = document.getElementById('stepsToggleBtn');
+  if (btn) btn.classList.toggle('on', S.stepsVisible);
+  renderTasks();
+}
+
+function updateStepsBtn() {
+  const btn = document.getElementById('stepsToggleBtn');
+  if (btn) btn.classList.toggle('on', S.stepsVisible !== false);
+}
+
 function toggleProjectMode() {
   const list = getActiveList(); if (!list) return;
   list.isProject = !list.isProject;
@@ -1523,7 +1542,6 @@ function toggleProjectMode() {
   renderCurrentList();
   toast(list.isProject ? '📁 Project mode on — pinned & always active' : 'Project mode off');
 }
-
 
 function renderCurrentList() {
   const list=getActiveList();
@@ -1574,6 +1592,7 @@ function renderTasks(animate) {
   }
 
   el.innerHTML=sorted.map((t,i)=>taskHTML(t,i,list)).join('');
+  updateStepsBtn();
 
   // FLIP: animate from old position to new
   if (animate) {
@@ -1595,7 +1614,8 @@ function renderTasks(animate) {
 
 function taskHTML(t, i, list) {
   const isInactive = list.inactive;
-  const stepsHtml = t.steps?.length ? `<div class="task-steps">${t.steps.map((s, si) => {
+  const showSteps = S.stepsVisible !== false;
+  const stepsHtml = showSteps && t.steps?.length ? `<div class="task-steps">${t.steps.map((s, si) => {
     const k = `${t.id}_${si}`; const done = list.stepDone[k] || false;
     return `<div class="step-row" id="sr_${t.id}_${si}">
       <div class="step-chk ${done?'done':''}" onclick="toggleStep('${t.id}',${si})">${done?chk8():''}</div>
@@ -1604,7 +1624,7 @@ function taskHTML(t, i, list) {
     </div>`;
   }).join('')}</div>` : '';
 
-  const addStepBtn = !isInactive ? `<button class="add-step-btn" onclick="addStep('${t.id}')">+ Add step</button>` : '';
+  const addStepBtn = !isInactive && showSteps ? `<button class="add-step-btn" onclick="addStep('${t.id}')">+ Add step</button>` : '';
   const delBtn = !isInactive ? `<button class="task-del" onclick="deleteTask('${t.id}')">✕</button>` : '';
   const durHtml = !isInactive
     ? `<span class="dur-tag" id="dur_${t.id}" onclick="editDur('${t.id}')" title="Click to edit">${t.duration}m</span>`
@@ -1627,22 +1647,22 @@ function taskHTML(t, i, list) {
       <div class="task-main">
         <div class="task-header">
           <div class="task-chk ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
-          <div class="task-body"><div class="task-name">${t.name}</div></div>
+          <div class="task-body"><div class="task-name" onclick="${!isInactive?`editTaskName('${t.id}')`:''}" style="${!isInactive?'cursor:pointer':''}">${t.name}</div></div>
+          ${!isInactive?`<span class="drag-handle" id="dh_${t.id}">⠿</span>`:''}
         </div>
         ${stepsHtml}
         ${addStepBtn}
-        <div class="task-tags-row">
+        ${showSteps ? `<div class="task-meta-row">
           ${tagPill}
           ${durHtml}
           ${completedAtHtml}
-          ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private — not sent to AI">🔒</span>' : ''}
-        </div>
-      </div>
-      <div class="task-actions-col">
-        ${!isInactive?`<span class="drag-handle" id="dh_${t.id}">⠿</span>`:''}
-        ${waBtn}
-        ${moveBtn}
-        ${delBtn}
+          ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private">🔒</span>' : ''}
+          ${waBtn}
+          ${moveBtn}
+          ${delBtn}
+        </div>` : `<div class="task-meta-row task-meta-minimal">
+          ${delBtn}
+        </div>`}
       </div>
     </div>
   </div>`;
@@ -1651,7 +1671,31 @@ function taskHTML(t, i, list) {
 function chk() { return '<svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,6 4,9 11,3"/></svg>'; }
 function chk8() { return '<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,6 4,9 11,3"/></svg>'; }
 
-// ─── TASK ACTIONS ─────────────────────────────────────────
+function editTaskName(id) {
+  const list = getActiveList(); if (!list) return;
+  const t = list.tasks.find(t=>t.id===id); if (!t) return;
+  const el = document.querySelector(`#ti_${id} .task-name`);
+  if (!el) return;
+  const inp = document.createElement('input');
+  inp.className = 'task-name-inp';
+  inp.value = t.name;
+  inp.onblur = () => saveTaskName(id, inp.value);
+  inp.onkeydown = e => { if (e.key==='Enter') inp.blur(); if (e.key==='Escape') { inp.value=t.name; inp.blur(); } };
+  el.replaceWith(inp);
+  inp.focus();
+  inp.select();
+}
+
+function saveTaskName(id, val) {
+  const list = getActiveList(); if (!list) return;
+  const t = list.tasks.find(t=>t.id===id); if (!t) return;
+  const trimmed = val.trim();
+  if (trimmed) t.name = trimmed;
+  save();
+  renderTasks();
+}
+
+
 let _lastToggle = {}; 
 function toggleTask(id) {
   const now = Date.now();
