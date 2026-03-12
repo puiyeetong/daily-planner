@@ -2187,13 +2187,29 @@ function cancelMove() {
 }
 
 // ─── WHATSAPP SHARE ───────────────────────────────────────
-function shareToWhatsApp(taskId) {
+async function shareToWhatsApp(taskId) {
   const list = getActiveList(); if (!list) return;
   const t = list.tasks.find(t=>t.id===taskId); if (!t) return;
-  let text = `*${t.name}*`;
-  if (t.steps?.length) text += '\n' + t.steps.map(s=>`• ${s}`).join('\n');
-  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
+
+  const waBtn = document.querySelector(`#ti_${taskId} .task-wa-btn`);
+  if (waBtn) { waBtn.textContent = '⏳'; waBtn.disabled = true; }
+
+  try {
+    const stepsText = t.steps?.length ? `\nSteps involved:\n${t.steps.map(s=>`- ${s}`).join('\n')}` : '';
+    const msg = await callAI(
+      [{role:'user', content:`Write a short, friendly WhatsApp message asking someone (a team member or family member) to help with this task:\n\nTask: ${t.name}${stepsText}\n\nTone: casual and warm, first person, like texting a friend or assistant. Keep it under 4 sentences. Don't use formal language. No emojis unless very natural. Just the message text, nothing else.`}],
+      'You write natural, conversational WhatsApp messages. Short, warm, direct. No preamble, just the message itself.'
+    );
+    const url = `https://wa.me/?text=${encodeURIComponent(msg.trim())}`;
+    window.open(url, '_blank');
+  } catch(e) {
+    // Fallback to plain text if AI fails
+    let text = `Hi! Can you help me with: *${t.name}*`;
+    if (t.steps?.length) text += '\n' + t.steps.map(s=>`• ${s}`).join('\n');
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  if (waBtn) { waBtn.textContent = '💬'; waBtn.disabled = false; }
 }
 
 
