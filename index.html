@@ -497,7 +497,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .cal-list-card-meta { font-size: 0.72rem; color: var(--ink-dim); }
 
 /* MOBILE SIDEBAR TOGGLE */
-.mob-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 10px 16px; color: var(--ink); font-size: 1.9rem; min-width: 60px; min-height: 60px; align-items: center; justify-content: center; }
+.mob-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 0 18px; color: var(--ink); font-size: 2.2rem; min-width: 70px; min-height: 70px; align-items: center; justify-content: center; flex-shrink: 0; margin-left: -18px; }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 90; }
 .sidebar-overlay.on { display: block; }
 
@@ -505,13 +505,13 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 @media (max-width: 680px) {
   body { overflow: hidden; }
 
-  header { padding: 10px 14px; }
+  header { padding: 0 14px; height: 70px; }
   .logo { font-size: 1.1rem; }
   .live-clock { font-size: 1rem; }
   .live-date { font-size: 0.6rem; }
   .ai-sw-wrap { gap: 4px; }
   .ai-sw { padding: 4px 10px; font-size: 0.68rem; }
-  .mob-menu-btn { display: flex; align-items: center; }
+  .mob-menu-btn { display: flex; align-items: center; justify-content: center; }
 
   /* On mobile, sidebar becomes fixed slide-out overlay */
   .sidebar {
@@ -2606,4 +2606,16 @@ function toast(msg) {
 init();
 </script>
 </body>
+<script>
+// Prevent pinch zoom on iOS Safari
+document.addEventListener('touchmove', function(e) {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, false);
+</script>
 </html>
