@@ -2539,7 +2539,10 @@ function taskDisplayName(t) {
 }
 function taskSummaryLine(t) {
   const name = taskDisplayName(t);
-  return `- ${name} (${t.done?'✓':'pending'}, ${t.duration}m)`;
+  const completedStr = t.done && t.completedAt
+    ? `✓ done at ${utc8(new Date(t.completedAt)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`
+    : 'pending';
+  return `- ${name} (${completedStr}, ${t.duration}m${t.tag ? ', '+t.tag : ''})`;
 }
 
 let calYear = utc8().getFullYear();
