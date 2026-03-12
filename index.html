@@ -1552,6 +1552,7 @@ function editStep(taskId, si) {
   const orig = t.steps[si];
   const inp = document.createElement('input');
   inp.className = 'step-edit-inp';
+  inp.id = `sei_${taskId}_${si}`;
   inp.value = orig;
   inp.onblur = () => saveStep(taskId, si);
   inp.onkeydown = (e) => { if(e.key==='Enter') saveStep(taskId, si); if(e.key==='Escape') renderTasks(); };
@@ -1562,8 +1563,16 @@ function editStep(taskId, si) {
 function saveStep(taskId, si) {
   const list = getActiveList(); if (!list) return;
   const t = list.tasks.find(t=>t.id===taskId); if (!t) return;
-  const inp = document.getElementById(`sei_${taskId}_${si}`);
-  if (inp) { const v = inp.value.trim(); if (v) t.steps[si] = v; save(); renderTasks(); }
+  // Try by ID first, then fall back to finding input in the row
+  let inp = document.getElementById(`sei_${taskId}_${si}`);
+  if (!inp) {
+    const rowEl = document.getElementById(`sr_${taskId}_${si}`);
+    if (rowEl) inp = rowEl.querySelector('.step-edit-inp');
+  }
+  if (!inp) return;
+  const v = inp.value.trim();
+  if (v) { t.steps[si] = v; save(); }
+  renderTasks();
 }
 
 function deleteStep(taskId, si) {
