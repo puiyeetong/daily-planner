@@ -97,18 +97,21 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .nav-tab.on { color: var(--rose); border-bottom-color: var(--rose); }
 
 /* ── APP SHELL ── */
-#app { display: flex; flex-direction: column; height: 100vh; }
+#app { display: flex; flex-direction: row; height: 100vh; }
+#content { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
 .tab { display: none; flex: 1; min-height: 0; overflow: hidden; }
 .tab.on { display: flex; }
 
 /* ── MAIN PLANNER TAB ── */
 #plannerTab { flex-direction: row; }
 
-/* SIDEBAR */
+/* SIDEBAR — always visible on desktop, slide-out on mobile */
 .sidebar {
   width: 240px; flex-shrink: 0; background: var(--surface2);
   border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden;
+  height: 100vh;
 }
+
 .sidebar-top { padding: 12px; border-bottom: 1px solid var(--border); }
 .new-list-btn {
   width: 100%; padding: 9px; border-radius: 10px; border: 1px solid var(--rose-dim);
@@ -148,21 +151,25 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .list-name-input:focus { color: var(--rose); }
 
 /* BRAIN DUMP */
-.dump-row { padding: 10px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; background: var(--surface); }
-.dump-inp { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 13px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; transition: border-color 0.2s; resize: none; height: 38px; line-height: 1.4; overflow: hidden; }
+.dump-row { padding: 10px 18px 0; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; background: var(--surface); align-items: flex-start; }
+.dump-inp { flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 13px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; transition: border-color 0.2s, height 0.15s; resize: none; height: 38px; line-height: 1.4; overflow: hidden; }
 .dump-inp:focus { border-color: var(--rose); height: 70px; }
 .dump-inp::placeholder { color: var(--ink-faint); }
-.org-btn { padding: 9px 14px; border-radius: 10px; border: none; background: var(--rose); color: #fff; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 5px; align-self: flex-end; }
+.org-btn { padding: 9px 14px; border-radius: 10px; border: none; background: var(--rose); color: #fff; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 5px; flex-shrink: 0; height: 38px; }
 .org-btn:hover:not(:disabled) { background: #B5726A; }
 .org-btn:disabled { background: var(--ink-faint); color: var(--surface); cursor: not-allowed; }
 
 /* MANUAL ADD ROW */
-.manual-row { padding: 6px 18px 10px; display: flex; gap: 8px; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); }
+.manual-row { padding: 6px 18px 10px; display: flex; gap: 8px; flex-shrink: 0; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; }
 .manual-inp { flex: 1; background: var(--bg); border: 1px dashed var(--border2); border-radius: 10px; padding: 7px 13px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; transition: all 0.2s; }
 .manual-inp:focus { border-color: var(--rose); border-style: solid; background: var(--surface); }
 .manual-inp::placeholder { color: var(--ink-faint); }
 .manual-btn { padding: 7px 14px; border-radius: 10px; border: 1px solid var(--border2); background: transparent; color: var(--ink-dim); font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .manual-btn:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
+.manual-lock-icon { font-size: 0.9rem; opacity: 0.5; flex-shrink: 0; cursor: default; }
+.ai-warning { width: 100%; font-size: 0.66rem; color: var(--ink-faint); padding: 4px 2px 8px; display: flex; align-items: center; gap: 4px; }
+.task-item { position: relative; }
+.task-lock-badge { position: absolute; bottom: 5px; left: 8px; font-size: 0.65rem; opacity: 0.4; line-height: 1; pointer-events: none; }
 
 /* TASK LIST */
 .task-list { flex: 1; overflow-y: auto; padding: 10px 18px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
@@ -246,57 +253,85 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .chat-send:hover { background: #B5726A; }
 .chat-send:disabled { background: var(--ink-faint); cursor: not-allowed; }
 
-/* ── ANALYTICS ── */
-#analyticsTab { flex-direction: column; overflow-y: auto; padding: 20px 22px; gap: 16px; background: var(--bg); }
-.a-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--rose); }
-.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
-.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow); }
-.stat-lbl { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-dim); margin-bottom: 5px; }
-.stat-val { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; color: var(--rose); }
-.stat-sub { font-size: 0.68rem; color: var(--ink-dim); margin-top: 2px; }
-.a-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.a-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); }
-.a-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1rem; color: var(--ink); margin-bottom: 12px; }
-.rating-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--surface2); border-radius: 8px; margin-bottom: 5px; }
-.rating-emoji { font-size: 1rem; }
-.rating-info { flex: 1; }
-.rating-name { font-size: 0.78rem; font-weight: 600; color: var(--ink); }
-.rating-pct { font-size: 0.7rem; color: var(--ink-dim); }
-.rating-bar-wrap { width: 80px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.rating-bar { height: 100%; border-radius: 3px; background: var(--rose); }
-.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.bar-lbl { font-size: 0.73rem; color: var(--ink-dim); width: 80px; flex-shrink: 0; }
-.bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-.bar-val { font-size: 0.7rem; color: var(--ink-dim); width: 34px; text-align: right; }
-.list-history { display: flex; flex-direction: column; gap: 4px; }
-.hist-row { display: flex; align-items: center; gap: 9px; padding: 7px 10px; background: var(--surface2); border-radius: 8px; }
-.hist-name { flex: 1; font-size: 0.76rem; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hist-bar-wrap { width: 80px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-.hist-bar { height: 100%; background: var(--green); border-radius: 2px; }
-.hist-pct { font-size: 0.7rem; color: var(--ink-dim); width: 32px; text-align: right; }
-.hist-rating { font-size: 0.8rem; }
-.ai-insight { background: var(--surface); border: 1px solid var(--rose-dim); border-radius: 12px; padding: 17px 19px; box-shadow: var(--shadow); }
-.ai-insight h3 { font-family: 'Cormorant Garamond', serif; font-size: 1rem; color: var(--rose); margin-bottom: 9px; }
-.ai-insight p { font-size: 0.82rem; color: var(--ink-dim); line-height: 1.75; }
-.gen-btn { margin-top: 11px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--rose-dim); background: transparent; color: var(--rose); font-family: 'Nunito', sans-serif; font-size: 0.76rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-.gen-btn:hover { background: var(--rose); color: #fff; }
 .empty-state { text-align: center; padding: 50px; color: var(--ink-faint); }
 .empty-state .ei { font-size: 2rem; margin-bottom: 10px; }
 .empty-state p { font-size: 0.8rem; line-height: 1.6; }
+/* ── ANALYTICS ── */
+#analyticsTab { flex-direction: column; overflow-y: auto; padding: 16px 18px; gap: 12px; background: var(--bg); }
+
+/* TREND BANNER */
+.trend-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.trend-left { display: flex; align-items: center; gap: 14px; }
+.trend-arrow { font-size: 2rem; line-height: 1; }
+.trend-arrow.up { color: var(--green); }
+.trend-arrow.down { color: var(--red); }
+.trend-arrow.flat { color: var(--ink-faint); }
+.trend-label { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--ink); }
+.trend-sub { font-size: 0.7rem; color: var(--ink-dim); margin-top: 2px; }
+.trend-stats { display: flex; gap: 20px; }
+.trend-stat { text-align: center; }
+.trend-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--rose); }
+.trend-stat-lbl { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink-faint); margin-top: 1px; }
+
+/* CARDS */
+.a-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.a-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; box-shadow: var(--shadow); }
+.a-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.a-card-head h3 { margin-bottom: 0; }
+.a-card-sub { font-size: 0.68rem; color: var(--ink-faint); }
+.a-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 0.95rem; color: var(--ink); margin-bottom: 10px; }
+
+/* SPARKLINE */
+.sparkline-wrap { display: flex; align-items: flex-end; gap: 5px; height: 54px; }
+.spark-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+.spark-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 3px; transition: height 0.4s; }
+.spark-pct { font-size: 0.55rem; color: var(--ink-faint); }
+
+/* TIME & EFFICIENCY */
+.time-plain { font-size: 0.8rem; color: var(--ink-dim); line-height: 1.8; }
+.time-plain strong { color: var(--ink); }
+.eff-plain { font-size: 0.8rem; color: var(--ink-dim); line-height: 1.8; }
+.eff-plain strong { color: var(--ink); }
+.eff-score { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--rose); margin-bottom: 4px; }
+
+/* LIST HISTORY */
+.list-history { display: flex; flex-direction: column; gap: 5px; }
+.hist-row { display: flex; align-items: center; gap: 9px; padding: 7px 10px; background: var(--surface2); border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+.hist-row:hover { background: var(--surface3); }
+.hist-info { flex: 1; min-width: 0; }
+.hist-name { font-size: 0.76rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-meta { font-size: 0.63rem; color: var(--ink-faint); margin-top: 1px; }
+.hist-bar-wrap { width: 60px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.hist-bar { height: 100%; background: var(--green); border-radius: 2px; }
+.hist-pct { font-size: 0.7rem; color: var(--ink-dim); width: 30px; text-align: right; flex-shrink: 0; }
+.hist-rating { font-size: 0.78rem; flex-shrink: 0; }
+
+/* AI INSIGHT CARDS */
+.ai-insight { background: var(--surface); border: 1px solid var(--rose-dim); border-radius: 12px; padding: 15px 17px; box-shadow: var(--shadow); }
+.ai-insight-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.ai-insight-head h3 { font-family: 'Cormorant Garamond', serif; font-size: 0.95rem; color: var(--rose); margin: 0; }
+.ai-insight-head .gen-btn { margin-top: 0; }
+.bullet-output { font-size: 0.8rem; color: var(--ink-dim); line-height: 1.7; }
+.bullet-output ul { margin: 0; padding: 0 0 0 4px; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.bullet-output li { display: flex; gap: 8px; }
+.bullet-output li::before { content: '›'; color: var(--rose); font-weight: 700; flex-shrink: 0; }
+.gen-btn { padding: 6px 13px; border-radius: 8px; border: 1px solid var(--rose-dim); background: transparent; color: var(--rose); font-family: 'Nunito', sans-serif; font-size: 0.73rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+.gen-btn:hover { background: var(--rose); color: #fff; }
 
 /* ── WEEKLY REPORT ── */
-#reportTab { flex-direction: column; overflow-y: auto; padding: 20px 22px; gap: 16px; background: var(--bg); }
-.report-top { display: flex; align-items: center; justify-content: space-between; }
-.report-top h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--rose); }
-.week-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.wk-s { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; text-align: center; box-shadow: var(--shadow); }
-.wv { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--rose); }
-.wl { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-dim); margin-top: 2px; }
-.report-body { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; font-size: 0.84rem; color: var(--ink-dim); line-height: 1.8; box-shadow: var(--shadow); }
-.report-body h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--rose); margin: 18px 0 7px; }
-.report-body h3:first-child { margin-top: 0; }
-.report-body .hl { color: var(--ink); font-weight: 600; }
+#reportTab { flex-direction: column; overflow-y: auto; padding: 16px 18px; gap: 12px; background: var(--bg); }
+.report-top { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.report-top h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--rose); }
+.week-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; }
+.wk-s { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; text-align: center; box-shadow: var(--shadow); }
+.wv { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--rose); }
+.wl { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-dim); margin-top: 2px; }
+.report-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); }
+.report-section h3 { font-family: 'Cormorant Garamond', serif; font-size: 1rem; color: var(--rose); margin-bottom: 10px; }
+.report-section ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.report-section li { font-size: 0.8rem; color: var(--ink-dim); line-height: 1.6; display: flex; gap: 8px; }
+.report-section li::before { content: '›'; color: var(--rose); font-weight: 700; flex-shrink: 0; }
+
 
 /* ── SETTINGS ── */
 #settingsTab { flex-direction: column; overflow-y: auto; padding: 20px 22px; gap: 14px; max-width: 560px; background: var(--bg); }
@@ -317,6 +352,139 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .danger-btn { padding: 8px 15px; border-radius: 8px; border: 1px solid var(--red); background: transparent; color: var(--red); font-family: 'Nunito', sans-serif; font-size: 0.76rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: all 0.2s; }
 .danger-btn:hover { background: var(--red); color: white; }
 
+/* TOGGLE SWITCH */
+.toggle-row { display: flex; align-items: center; gap: 14px; justify-content: space-between; }
+.toggle-label { font-size: 0.82rem; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+.toggle-desc { font-size: 0.72rem; color: var(--ink-dim); line-height: 1.4; }
+.toggle-switch { width: 40px; height: 22px; border-radius: 11px; background: var(--border); cursor: pointer; position: relative; flex-shrink: 0; transition: background 0.2s; }
+.toggle-switch::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle-switch.on { background: var(--rose); }
+.toggle-switch.on::after { left: 21px; }
+
+/* TAG PILL */
+.tag-pill { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 10px; font-size: 0.62rem; font-weight: 700; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.tag-pill:hover { opacity: 0.8; }
+.tag-pill.work    { background: rgba(122,158,194,0.15); color: #5a80a8; border-color: rgba(122,158,194,0.3); }
+.tag-pill.admin   { background: rgba(196,149,106,0.15); color: #9a6b3a; border-color: rgba(196,149,106,0.3); }
+.tag-pill.wellness{ background: rgba(122,168,148,0.15); color: #3d8a6a; border-color: rgba(122,168,148,0.3); }
+.tag-pill.kids    { background: rgba(194,132,122,0.15); color: #9a5248; border-color: rgba(194,132,122,0.3); }
+.tag-pill.home    { background: rgba(164,142,194,0.15); color: #7a5a9a; border-color: rgba(164,142,194,0.3); }
+.tag-pill.custom  { background: rgba(194,132,122,0.10); color: var(--rose); border-color: var(--rose-dim); }
+.tag-pill.none    { background: var(--surface2); color: var(--ink-faint); border-color: var(--border); }
+
+/* TAG DROPDOWN */
+.tag-dropdown { position: relative; display: inline-block; }
+.tag-dropdown-menu { position: absolute; top: 100%; left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 100; min-width: 160px; padding: 6px; display: none; }
+.tag-dropdown-menu.open { display: block; }
+.tag-dropdown-item { padding: 6px 10px; border-radius: 7px; font-size: 0.76rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
+.tag-dropdown-item:hover { background: var(--surface2); }
+
+/* TAG VIEW TAB */
+#tagsTab { flex-direction: column; overflow-y: auto; padding: 16px 18px; gap: 12px; background: var(--bg); }
+.tags-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.tag-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow); }
+.tag-card:hover { border-color: var(--rose-dim); transform: translateY(-1px); }
+.tag-card.active-tag { border-color: var(--rose); background: var(--rose-soft); }
+.tag-card-emoji { font-size: 1.4rem; margin-bottom: 6px; }
+.tag-card-name { font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+.tag-card-count { font-size: 0.68rem; color: var(--ink-dim); margin-top: 3px; }
+.tag-card-rate { font-size: 0.68rem; color: var(--green); font-weight: 600; margin-top: 1px; }
+.tag-task-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.tag-task-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.15s; }
+.tag-task-row:hover { background: var(--surface2); }
+.tag-task-row.done-task { opacity: 0.6; }
+.tag-task-name { flex: 1; font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.tag-task-row.done-task .tag-task-name { text-decoration: line-through; color: var(--ink-faint); }
+.tag-task-meta { font-size: 0.66rem; color: var(--ink-faint); }
+.tag-task-check { font-size: 0.9rem; width: 20px; text-align: center; flex-shrink: 0; }
+.tags-back-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-family: 'Nunito', sans-serif; font-size: 0.76rem; color: var(--ink-dim); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
+.tags-back-btn:hover { background: var(--surface2); color: var(--ink); }
+.tags-view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.tags-view-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--ink); }
+.tags-view-sub { font-size: 0.72rem; color: var(--ink-dim); }
+
+/* LENSES */
+.lens-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; position: relative; }
+.lens-card.active-lens { border-color: var(--rose); background: var(--rose-soft); }
+.lens-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.lens-name { font-size: 0.88rem; font-weight: 700; color: var(--ink); flex: 1; }
+.lens-active-badge { font-size: 0.6rem; font-weight: 700; background: var(--rose); color: white; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.lens-def { font-size: 0.76rem; color: var(--ink-dim); line-height: 1.6; margin-bottom: 10px; white-space: pre-wrap; }
+.lens-actions { display: flex; gap: 6px; }
+.lens-btn { padding: 5px 12px; border-radius: 7px; font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border); background: transparent; color: var(--ink-dim); }
+.lens-btn:hover { background: var(--surface2); color: var(--ink); }
+.lens-btn.primary { background: var(--rose); border-color: var(--rose); color: white; }
+.lens-btn.primary:hover { background: #B5726A; }
+.lens-btn.danger:hover { color: var(--red); border-color: var(--red); }
+.lens-none-msg { font-size: 0.8rem; color: var(--ink-faint); font-style: italic; padding: 10px 0; text-align: center; }
+.no-lens-notice { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 0.8rem; color: var(--ink-dim); line-height: 1.6; text-align: center; }
+.no-lens-notice strong { color: var(--ink); display: block; margin-bottom: 4px; font-size: 0.85rem; }
+
+/* LENS MODAL */
+#lensModal { position: fixed; inset: 0; background: rgba(58,51,48,0.45); display: none; align-items: center; justify-content: center; z-index: 400; backdrop-filter: blur(4px); }
+#lensModal.show { display: flex; }
+.lens-modal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; max-width: 500px; width: 92%; box-shadow: var(--shadow-md); }
+.lens-modal-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--rose); margin-bottom: 16px; }
+.lens-modal-inp { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; font-family: 'Nunito', sans-serif; font-size: 0.84rem; color: var(--ink); outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
+.lens-modal-inp:focus { border-color: var(--rose); }
+.lens-modal-ta { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: var(--ink); outline: none; resize: vertical; min-height: 100px; line-height: 1.6; transition: border-color 0.2s; margin-bottom: 14px; }
+.lens-modal-ta:focus { border-color: var(--rose); }
+.lens-modal-hint { font-size: 0.7rem; color: var(--ink-faint); margin-top: -8px; margin-bottom: 12px; line-height: 1.5; }
+
+/* TAG MODAL */
+#tagModal { position: fixed; inset: 0; background: rgba(58,51,48,0.45); display: none; align-items: center; justify-content: center; z-index: 400; backdrop-filter: blur(4px); }
+#tagModal.show { display: flex; }
+.tag-modal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; max-width: 400px; width: 92%; box-shadow: var(--shadow-md); }
+.tag-modal-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--rose); margin-bottom: 16px; }
+
+/* SIDEBAR AI SWITCHER */
+.sidebar-ai-wrap { display: flex; background: var(--surface3); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-bottom: 8px; }
+.sidebar-ai-btn { flex: 1; padding: 5px; border-radius: 6px; border: none; background: transparent; color: var(--ink-dim); font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; }
+.sidebar-ai-btn.on { background: var(--rose); color: #fff; }
+
+/* GLOBAL PROGRESS BAR (below nav) */
+.global-prog { display: none; align-items: center; gap: 8px; padding: 5px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.global-prog.visible { display: flex; }
+.global-prog .gp-label { font-size: 0.68rem; color: var(--ink-dim); white-space: nowrap; }
+.global-prog .gp-bar { flex: 1; height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden; min-width: 60px; }
+.global-prog .gp-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s; }
+.global-prog .gp-pct { font-size: 0.68rem; color: var(--green); font-weight: 700; white-space: nowrap; }
+.global-prog .gp-emoji { font-size: 0.82rem; }
+
+/* SIDEBAR SEARCH & BOTTOM */
+.search-wrap { padding: 8px 0 0; }
+.search-inp { width: 100%; background: var(--surface3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-family: 'Nunito', sans-serif; font-size: 0.76rem; color: var(--ink); outline: none; transition: border-color 0.2s; }
+.search-inp:focus { border-color: var(--rose); }
+.sidebar-bottom { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.sidebar-settings-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--ink-dim); font-family: 'Nunito', sans-serif; font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; }
+.sidebar-settings-btn:hover { background: var(--surface3); color: var(--ink); }
+
+/* CALENDAR */
+.cal-wrap { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; flex-shrink: 0; }
+.cal-month-label { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--ink); }
+.cal-nav-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 1.1rem; cursor: pointer; color: var(--ink-dim); transition: all 0.15s; }
+.cal-nav-btn:hover { background: var(--surface2); color: var(--ink); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 14px 10px; flex-shrink: 0; }
+.cal-day-label { text-align: center; font-size: 0.62rem; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; padding: 4px 0; }
+.cal-day { min-height: 38px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; position: relative; }
+.cal-day:hover { background: var(--surface2); }
+.cal-day.today { border-color: var(--rose-dim); background: var(--rose-soft); }
+.cal-day.selected { background: var(--rose); border-color: var(--rose); }
+.cal-day.has-list .cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-top: 2px; }
+.cal-day.selected .cal-dot { background: white; }
+.cal-day-num { font-size: 0.78rem; font-weight: 600; color: var(--ink); line-height: 1; }
+.cal-day.today .cal-day-num { color: var(--rose); }
+.cal-day.selected .cal-day-num { color: white; }
+.cal-day.other-month .cal-day-num { color: var(--ink-faint); }
+.cal-dot { width: 5px; height: 5px; border-radius: 50%; }
+.cal-list-area { flex: 1; overflow-y: auto; padding: 0 14px 14px; border-top: 1px solid var(--border); }
+.cal-date-heading { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: var(--ink); padding: 12px 0 8px; }
+.cal-list-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+.cal-list-card:hover { border-color: var(--rose-dim); background: var(--rose-soft); }
+.cal-list-card-name { font-size: 0.84rem; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.cal-list-card-meta { font-size: 0.72rem; color: var(--ink-dim); }
+
 /* MOBILE SIDEBAR TOGGLE */
 .mob-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 6px 10px; color: var(--ink); font-size: 1.1rem; }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 90; }
@@ -334,14 +502,16 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
   .ai-sw { padding: 4px 10px; font-size: 0.68rem; }
   .mob-menu-btn { display: flex; align-items: center; }
 
+  /* On mobile, sidebar becomes fixed slide-out overlay */
+  .sidebar {
+    position: fixed; left: -260px; top: 0; z-index: 100;
+    width: 240px; height: 100vh; transition: left 0.25s ease; box-shadow: var(--shadow-md);
+  }
+  .sidebar.open { left: 0; }
+
   nav { padding: 0 6px; overflow-x: auto; }
   .nav-tab { padding: 8px 10px; font-size: 0.64rem; letter-spacing: 0; }
 
-  .sidebar {
-    position: fixed; left: -260px; top: 0; height: 100vh; z-index: 100;
-    width: 260px; transition: left 0.25s ease; box-shadow: var(--shadow-md);
-  }
-  .sidebar.open { left: 0; }
 
   #plannerTab { flex-direction: column; }
   .main-area { width: 100%; }
@@ -453,6 +623,27 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 
 <!-- APP -->
 <div id="app" style="display:none">
+  <!-- SIDEBAR (always visible on desktop, slide-out on mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="mainSidebar">
+    <div class="sidebar-top">
+      <button class="new-list-btn" onclick="newList()">+ New List</button>
+      <div class="search-wrap">
+        <input class="search-inp" id="searchInp" placeholder="🔍 Search tasks..." oninput="renderSidebar()" />
+      </div>
+    </div>
+    <div class="sidebar-lists" id="sidebarLists"></div>
+    <div class="sidebar-bottom">
+      <div class="sidebar-ai-wrap">
+        <button class="sidebar-ai-btn on" id="swC" onclick="switchAI('claude')">Claude</button>
+        <button class="sidebar-ai-btn" id="swD" onclick="switchAI('deepseek')">DeepSeek</button>
+      </div>
+      <button class="sidebar-settings-btn" onclick="goTab('settings');closeSidebar()">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT (header + nav + all tabs) -->
+  <div id="content">
   <header>
     <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
     <div class="logo">Daily Planner</div>
@@ -464,33 +655,24 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
       <span class="rating-label">Today</span>
       <span id="ratingEmoji">—</span>
     </div>
-    <div class="prog-wrap" id="progWrap" style="display:none">
-      <span class="prog-label" id="progLabel">0/0</span>
-      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
-      <span class="prog-pct" id="progPct">0%</span>
-    </div>
-    <div class="ai-sw-wrap">
-      <button class="ai-sw on" id="swC" onclick="switchAI('claude')">Claude</button>
-      <button class="ai-sw" id="swD" onclick="switchAI('deepseek')">DeepSeek</button>
-    </div>
   </header>
   <nav>
     <button class="nav-tab on" onclick="goTab('planner')">📋 Lists</button>
     <button class="nav-tab" onclick="goTab('chat')">💬 Chat</button>
     <button class="nav-tab" onclick="goTab('analytics')">📊 Analytics</button>
-    <button class="nav-tab" onclick="goTab('report')">📈 Weekly Report</button>
-    <button class="nav-tab" onclick="goTab('settings')">⚙️ Settings</button>
+    <button class="nav-tab" onclick="goTab('calendar')">📅 Calendar</button>
+    <button class="nav-tab" onclick="goTab('report')">📈 Report</button>
+    <button class="nav-tab" onclick="goTab('tags')">🏷️ Tags</button>
   </nav>
+  <div class="global-prog" id="globalProg">
+    <span class="gp-label" id="gpLabel">0/0</span>
+    <div class="gp-bar"><div class="gp-fill" id="gpFill" style="width:0%"></div></div>
+    <span class="gp-pct" id="gpPct">0%</span>
+    <span class="gp-emoji" id="gpEmoji"></span>
+  </div>
 
   <!-- PLANNER -->
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
   <div class="tab on" id="plannerTab">
-    <div class="sidebar" id="mainSidebar">
-      <div class="sidebar-top">
-        <button class="new-list-btn" onclick="newList()">+ New List</button>
-      </div>
-      <div class="sidebar-lists" id="sidebarLists"></div>
-    </div>
     <div class="main-area">
       <div class="list-header" id="listHeader">
         <input class="list-name-input" id="listNameInput" placeholder="List name..." onblur="saveListName()" onkeydown="if(event.key==='Enter')this.blur()" />
@@ -501,9 +683,11 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
           <span id="orgSpin" style="display:none" class="spin"></span>
           <span id="orgTxt">✨ Organise</span>
         </button>
+        <div class="ai-warning">⚠️ Everything typed here is sent to AI — don't put private info here</div>
       </div>
       <div class="manual-row" id="manualRow">
         <input class="manual-inp" id="manualInp" placeholder="Add task manually..." onkeydown="if(event.key==='Enter')addManualTask()" />
+        <span class="manual-lock-icon" id="manualLockIcon" title="Manual tasks are private — not sent to AI">🔒</span>
         <button class="manual-btn" onclick="addManualTask()">+ Add</button>
       </div>
       <div class="task-list" id="taskList">
@@ -528,40 +712,142 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
   <div class="tab" id="analyticsTab">
     <div id="analyticsEmpty" class="empty-state"><div class="ei">📊</div><p>Archive a few lists to unlock analytics.</p></div>
     <div id="analyticsContent" style="display:none;flex-direction:column;gap:14px;">
-      <div class="a-title">📊 Analytics</div>
-      <div class="stat-grid" id="statsGrid"></div>
+
+      <!-- TREND BANNER -->
+      <div class="trend-banner" id="trendBanner">
+        <div class="trend-left">
+          <div class="trend-arrow" id="trendArrow">→</div>
+          <div>
+            <div class="trend-label" id="trendLabel">Steady</div>
+            <div class="trend-sub" id="trendSub">Not enough data yet</div>
+          </div>
+        </div>
+        <div class="trend-stats">
+          <div class="trend-stat"><div class="trend-stat-val" id="trendAvg">—</div><div class="trend-stat-lbl">Avg completion</div></div>
+          <div class="trend-stat"><div class="trend-stat-val" id="trendEff">—</div><div class="trend-stat-lbl">Efficiency</div></div>
+          <div class="trend-stat"><div class="trend-stat-val" id="trendLists">—</div><div class="trend-stat-lbl">Lists archived</div></div>
+        </div>
+      </div>
+
+      <!-- SPARKLINE -->
+      <div class="a-card">
+        <div class="a-card-head"><h3>📈 Completion Trend</h3><span class="a-card-sub" id="sparkSub"></span></div>
+        <div class="sparkline-wrap" id="sparklineWrap"></div>
+      </div>
+
+      <!-- TIME + EFFICIENCY ROW -->
       <div class="a-row">
-        <div class="a-card"><h3>🏅 Rating Breakdown</h3><div id="ratingBreakdown"></div></div>
-        <div class="a-card"><h3>⏰ Active Time Patterns</h3><div id="timePatterns"></div></div>
+        <div class="a-card">
+          <h3>⏰ When You Work</h3>
+          <div class="time-plain" id="timePlain"></div>
+        </div>
+        <div class="a-card">
+          <h3>⚡ Efficiency</h3>
+          <div class="eff-plain" id="effPlain"></div>
+        </div>
       </div>
-      <div class="a-card"><h3>📅 List History</h3><div class="list-history" id="listHistory"></div></div>
+
+      <!-- LIST HISTORY -->
+      <div class="a-card">
+        <h3>📅 Recent Lists</h3>
+        <div class="list-history" id="listHistory"></div>
+      </div>
+
+      <!-- SKIPPED TASK AI -->
       <div class="ai-insight" id="skipCoachCard">
-        <h3>⚠️ Skipped Task Patterns</h3>
-        <p id="skipCoachText" style="font-style:italic;">Click below — AI will analyse what you tend to skip and coach you on it.</p>
-        <button class="gen-btn" onclick="genSkipCoach()"><span id="skipSpin" style="display:none" class="spin spin-w"></span><span id="skipTxt">Analyse My Skipped Tasks</span></button>
+        <div class="ai-insight-head">
+          <h3>⚠️ What You Skip</h3>
+          <button class="gen-btn" onclick="genSkipCoach()"><span id="skipSpin" style="display:none" class="spin spin-w"></span><span id="skipTxt">Analyse</span></button>
+        </div>
+        <div id="skipCoachOutput" class="bullet-output">Tap Analyse — AI will find patterns in your skipped tasks.</div>
       </div>
+
+      <!-- AI COACHING -->
       <div class="ai-insight">
-        <h3>🤖 AI Coaching</h3>
-        <p id="insightText" style="font-style:italic;">Click below for personalised coaching based on your patterns.</p>
-        <button class="gen-btn" onclick="genInsight()"><span id="insSpin" style="display:none" class="spin spin-w"></span><span id="insTxt">Generate Insight</span></button>
+        <div class="ai-insight-head">
+          <h3>🤖 Coaching</h3>
+          <button class="gen-btn" onclick="genInsight()"><span id="insSpin" style="display:none" class="spin spin-w"></span><span id="insTxt">Generate</span></button>
+        </div>
+        <div id="insightOutput" class="bullet-output">Tap Generate — AI will coach you on your specific patterns.</div>
       </div>
+
     </div>
   </div>
 
   <!-- WEEKLY REPORT -->
   <div class="tab" id="reportTab">
     <div class="report-top">
-      <h2>📈 Weekly Report</h2>
-      <button class="gen-btn" id="repBtn" onclick="genReport()"><span id="repSpin" style="display:none" class="spin spin-w"></span><span id="repTxt">Generate Report</span></button>
+      <h2>📈 Report</h2>
+      <button class="gen-btn" id="repBtn" onclick="genReport()"><span id="repSpin" style="display:none" class="spin spin-w"></span><span id="repTxt">Generate</span></button>
     </div>
-    <div id="reportEmpty" class="empty-state"><div class="ei">📈</div><p>Archive a few lists then generate your weekly report.</p></div>
-    <div id="reportContent" style="display:none;flex-direction:column;gap:14px;">
+    <div id="reportEmpty" class="empty-state"><div class="ei">📈</div><p>Archive a few lists then generate your report.</p></div>
+    <div id="reportContent" style="display:none;flex-direction:column;gap:12px;">
       <div class="week-stats" id="weekStats"></div>
-      <div class="report-body" id="reportBody"></div>
+      <div id="reportCards"></div>
     </div>
   </div>
 
-  <!-- SETTINGS -->
+  <!-- CALENDAR -->
+  <div class="tab" id="calendarTab">
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <div class="cal-month-label" id="calMonthLabel"></div>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-list-area" id="calListArea">
+        <div class="empty-state"><div class="ei">📅</div><p>Tap a date to see your lists.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAGS TAB -->
+  <div class="tab" id="tagsTab">
+    <div id="tagsGrid" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="tags-view-header">
+        <div>
+          <div class="tags-view-title">🏷️ Tags</div>
+          <div class="tags-view-sub">Browse tasks by category across all your lists</div>
+        </div>
+      </div>
+      <div class="tags-grid" id="tagsGridInner"></div>
+    </div>
+    <div id="tagsDetail" style="display:none;flex-direction:column;gap:10px;">
+      <div class="tags-view-header">
+        <button class="tags-back-btn" onclick="showTagsGrid()">‹ All Tags</button>
+      </div>
+      <div id="tagsDetailHeader"></div>
+      <div class="tag-task-list" id="tagsDetailList"></div>
+    </div>
+  </div>
+
+  <!-- LENS MODAL -->
+  <div id="lensModal">
+    <div class="lens-modal-card">
+      <h3 id="lensModalTitle">New Lens</h3>
+      <input class="lens-modal-inp" id="lensNameInp" placeholder="e.g. Hustle Mode, Wellness, Balance..." />
+      <textarea class="lens-modal-ta" id="lensDefInp" placeholder="Describe what productive means in this phase...&#10;&#10;e.g. I run a design studio. Productive = business tasks, clearing pending things, organising my workspace. Daily maintenance like cooking or school runs don't count. Time-heavy tasks like gym are only worth it if nothing important is pending."></textarea>
+      <div class="lens-modal-hint">Be specific. AI will read this every time it analyses your tasks. You can always edit it later.</div>
+      <div class="confirm-btns">
+        <button class="btn-ok" onclick="saveLens()">Save Lens</button>
+        <button class="btn-cancel" onclick="closeLensModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAG MODAL (create custom tag) -->
+  <div id="tagModal">
+    <div class="tag-modal-card">
+      <h3>New Custom Tag</h3>
+      <input class="lens-modal-inp" id="customTagNameInp" placeholder="Tag name e.g. Sapphire Ring" />
+      <textarea class="lens-modal-ta" id="customTagDescInp" placeholder="What is this about? So AI understands it.&#10;&#10;e.g. My jewellery design project — income related work" style="min-height:70px;"></textarea>
+      <div class="confirm-btns">
+        <button class="btn-ok" onclick="saveCustomTag()">Add Tag</button>
+        <button class="btn-cancel" onclick="closeTagModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
   <div class="tab" id="settingsTab">
     <div class="s-card">
       <h3>🔑 API Keys</h3>
@@ -569,6 +855,16 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
       <div class="s-row"><label>DeepSeek Key</label><input type="password" class="s-inp" id="dKeyIn" placeholder="sk-..." /></div>
       <button class="save-btn" onclick="saveKeys()">Save Keys</button>
       <div class="save-ok" id="keysOk"></div>
+    </div>
+    <div class="s-card">
+      <h3>🔒 Privacy</h3>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Keep manual tasks private from AI</div>
+          <div class="toggle-desc">Tasks added manually (not via ✨ Organise) won't be shared with AI during analysis. They'll show a 🔒 icon.</div>
+        </div>
+        <div class="toggle-switch" id="manualPrivateToggle" onclick="toggleManualPrivate()"></div>
+      </div>
     </div>
     <div class="s-card">
       <h3>⏰ Work Hours</h3>
@@ -589,6 +885,18 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
       <div class="save-ok" id="sbOk"></div>
     </div>
     <div class="s-card">
+      <h3>🔭 My Lenses</h3>
+      <p style="font-size:0.78rem;color:var(--ink-dim);margin-bottom:12px;line-height:1.6;">A lens is your personal definition of productive. AI only coaches when a lens is active — raw stats are always visible.</p>
+      <div id="lensesList"></div>
+      <button class="save-btn" onclick="openLensModal(null)" style="margin-top:8px;">+ New Lens</button>
+    </div>
+    <div class="s-card">
+      <h3>🏷️ Custom Tags</h3>
+      <p style="font-size:0.78rem;color:var(--ink-dim);margin-bottom:10px;line-height:1.6;">Add custom tags so AI understands your specific projects and contexts.</p>
+      <div id="customTagsList"></div>
+      <button class="save-btn" onclick="openTagModal()" style="margin-top:8px;">+ New Tag</button>
+    </div>
+    <div class="s-card">
       <h3>💾 Data</h3>
       <p style="font-size:0.8rem;color:var(--ink-dim);margin-bottom:12px;">Export saves everything. Import restores it — useful when switching computers.</p>
       <button class="export-btn" onclick="exportData()">⬇ Export</button>
@@ -596,7 +904,8 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
       <div><button class="danger-btn" onclick="clearAll()">Clear All Data</button></div>
     </div>
   </div>
-</div>
+  </div><!-- end #content -->
+</div><!-- end #app -->
 
 <script>
 // ─── UTC+8 ────────────────────────────────────────────────
@@ -612,10 +921,14 @@ let S = {
   keys: {claude:'', deepseek:''},
   wHours: {start:'10:00', end:'19:00'},
   supabase: {url:'', key:''},
+  manualPrivate: true,
   lists: [],
   activeListId: null,
   records: [],
   xp: 0,
+  lenses: [],
+  activeLensId: null,
+  customTags: [], // [{id, name, desc, emoji}]
 };
 let setupAI = 'claude';
 let pendingTasks = [];
@@ -633,6 +946,20 @@ function init() {
   document.getElementById('weIn').value = S.wHours?.end || '19:00';
   document.getElementById('sbUrl').value = S.supabase?.url || '';
   document.getElementById('sbKey').value = S.supabase?.key || '';
+  if (S.manualPrivate === undefined) S.manualPrivate = true; // default on
+  if (!S.lenses) S.lenses = [];
+  if (!S.customTags) S.customTags = [];
+  // Add default lens for new users
+  if (S.lenses.length === 0) {
+    const defaultLens = {
+      id: 'lens_default',
+      name: 'My First Lens',
+      definition: `Productive means completing tasks that move something forward — work, income, clearing pending things, or organising your environment.\n\nDaily maintenance like cooking, errands, and personal care keeps life running but doesn't count as progress on its own.\n\nA good day means real progress happened, not just that you were busy.\n\n(This is a starting point — edit it to match your own life and goals.)`
+    };
+    S.lenses.push(defaultLens);
+    S.activeLensId = defaultLens.id;
+  }
+  updatePrivacyToggle();
 
   if (S.keys[S.ai] || S.keys.claude || S.keys.deepseek) {
     if (!S.keys[S.ai]) S.ai = S.keys.claude ? 'claude' : 'deepseek';
@@ -904,14 +1231,30 @@ function updateAISw() {
   document.getElementById('swD').classList.toggle('on',S.ai==='deepseek');
 }
 
+function toggleManualPrivate() {
+  S.manualPrivate = !S.manualPrivate;
+  save();
+  document.getElementById('manualPrivateToggle').classList.toggle('on', S.manualPrivate);
+  renderTasks();
+}
+function updatePrivacyToggle() {
+  const el = document.getElementById('manualPrivateToggle');
+  if (el) el.classList.toggle('on', !!S.manualPrivate);
+}
+
 // ─── TABS ─────────────────────────────────────────────────
-const TABS=['planner','chat','analytics','report','settings'];
+const TABS=['planner','chat','analytics','calendar','report','tags','settings'];
 function goTab(tab) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('on'));
   document.getElementById(tab+'Tab').classList.add('on');
   document.querySelectorAll('.nav-tab')[TABS.indexOf(tab)]?.classList.add('on');
   if (tab==='analytics') renderAnalytics();
+  if (tab==='calendar') renderCalendar();
+  if (tab==='tags') renderTagsTab();
+  if (tab==='settings') { renderLensesList(); renderCustomTagsList(); }
+  // Show sidebar on planner tab, keep accessible via hamburger on others
+  closeSidebar();
 }
 
 // ─── LISTS ────────────────────────────────────────────────
@@ -968,17 +1311,29 @@ function archiveList(id) {
   toast('List moved to Inactive ✅');
 }
 
+function reactivateList(id) {
+  const list = S.lists.find(l=>l.id===id); if (!list) return;
+  list.inactive = false;
+  list.archivedAt = null;
+  S.activeListId = id;
+  save(); renderSidebar(); renderCurrentList();
+  toast('List reactivated ✅');
+}
+
 function deleteList(id) {
-  if (!confirm('Delete this list? This cannot be undone.')) return;
+  const list = S.lists.find(l=>l.id===id); if (!list) return;
+  const name = getAutoName(list);
+  if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
   S.lists=S.lists.filter(l=>l.id!==id);
   if (S.activeListId===id) {
-    S.activeListId=S.lists[0]?.id||null;
+    S.activeListId=S.lists.find(l=>!l.inactive)?.id || S.lists[0]?.id || null;
     if (!S.activeListId) createList();
   }
   save();
   renderSidebar();
   renderCurrentList();
   renderAnalytics();
+  toast('List deleted');
 }
 
 function saveListName() {
@@ -1001,29 +1356,35 @@ function getAutoName(list) {
 
 // ─── RENDER SIDEBAR ───────────────────────────────────────
 function renderSidebar() {
-  const active=S.lists.filter(l=>!l.inactive);
-  const inactive=S.lists.filter(l=>l.inactive);
-  let html='';
-
+  const q = (document.getElementById('searchInp')?.value || '').toLowerCase().trim();
+  let lists = S.lists;
+  if (q) {
+    lists = lists.filter(l => {
+      const name = getAutoName(l).toLowerCase();
+      const taskNames = l.tasks.map(t=>t.name.toLowerCase()).join(' ');
+      return name.includes(q) || taskNames.includes(q);
+    });
+  }
+  const active = lists.filter(l=>!l.inactive);
+  const inactive = lists.filter(l=>l.inactive);
+  let html = '';
   if (active.length) {
-    html+=`<div class="sidebar-section-label">Active</div>`;
+    html += `<div class="sidebar-section-label">Active</div>`;
     active.forEach(l=>{ html+=listItemHTML(l); });
   }
-
   if (inactive.length) {
-    if (active.length) html+=`<div class="sidebar-divider"></div>`;
-    html+=`<div class="sidebar-section-label">Inactive</div>`;
+    if (active.length) html += `<div class="sidebar-divider"></div>`;
+    html += `<div class="sidebar-section-label">Inactive</div>`;
     inactive.forEach(l=>{ html+=listItemHTML(l); });
   }
-
-  document.getElementById('sidebarLists').innerHTML=html||'<div style="font-size:0.74rem;color:var(--ink-faint);padding:8px 6px;">No lists yet</div>';
+  document.getElementById('sidebarLists').innerHTML = html || `<div style="font-size:0.74rem;color:var(--ink-faint);padding:8px 6px;">${q?'No results':'No lists yet'}</div>`;
 }
 
 function listItemHTML(l) {
   const isActive=l.id===S.activeListId;
   const name=getAutoName(l);
   const rating=l.inactive?`<span class="list-item-rating">${l.rating||''}</span>`:'';
-  const archiveBtn=!l.inactive?`<button class="list-action-btn archive" onclick="event.stopPropagation();archiveList('${l.id}')" title="Move to Inactive">◽</button>`:'';
+  const archiveBtn=!l.inactive?`<button class="list-action-btn archive" onclick="event.stopPropagation();archiveList('${l.id}')" title="Move to Inactive">◽</button>`:`<button class="list-action-btn archive" onclick="event.stopPropagation();reactivateList('${l.id}')" title="Reactivate" style="color:var(--green)">↩</button>`;
   const d=new Date(l.created);
   const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   return `<div class="list-item ${isActive?'active':''}" onclick="selectList('${l.id}')">
@@ -1052,6 +1413,10 @@ function renderCurrentList() {
   document.getElementById('dumpInp').placeholder = isInactive ? 'This list is inactive — view only' : 'Type tasks... AI will organise and add them to your list';
   const mr = document.getElementById('manualRow');
   if (mr) mr.style.display = isInactive ? 'none' : 'flex';
+  const lockIcon = document.getElementById('manualLockIcon');
+  if (lockIcon) lockIcon.style.display = S.manualPrivate ? 'inline' : 'none';
+  const aiWarn = document.querySelector('.ai-warning');
+  if (aiWarn) aiWarn.style.display = isInactive ? 'none' : 'flex';
 
   renderTasks();
   updateProgress();
@@ -1085,18 +1450,25 @@ function taskHTML(t, i, list) {
     ? `<span class="dur-tag" id="dur_${t.id}" onclick="editDur('${t.id}')" title="Click to edit">${t.duration}m</span>`
     : `<span class="dur-tag">${t.duration}m</span>`;
 
+  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠',documents:'📄'};
+  const tagPill = t.tag
+    ? `<span class="tag-pill ${t.tag.toLowerCase().replace(/\s+/g,'-')||'custom'}" onclick="${!isInactive?`changeTaskTag('${t.id}',event)`:''}" title="${isInactive?t.tag:'Click to change tag'}">${tagEmojis[t.tag]||'🏷️'} ${t.tag}</span>`
+    : (!isInactive ? `<span class="tag-pill none" onclick="changeTaskTag('${t.id}',event)" title="Add tag">+ tag</span>` : '');
+
   return `<div class="task-item ${t.done?'done':''}" id="ti_${t.id}" draggable="${!isInactive}" ondragstart="dStart(event,'${t.id}')" ondragover="dOver(event,'${t.id}')" ondrop="dDrop(event,'${t.id}')" ondragleave="dLeave(event)">
     <div class="task-header">
       ${!isInactive?'<span class="drag-handle">⠿</span>':''}
       <div class="task-chk ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?chk():''}</div>
       <div class="task-body"><div class="task-name">${t.name}</div></div>
-      <div class="task-right">
+      <div class="task-right" style="display:flex;align-items:center;gap:5px;">
+        ${tagPill}
         ${durHtml}
         ${delBtn}
       </div>
     </div>
     ${stepsHtml}
     ${addStepBtn}
+    ${t.isManual && S.manualPrivate ? '<div class="task-lock-badge" title="Private — not sent to AI">🔒</div>' : ''}
   </div>`;
 }
 
@@ -1110,6 +1482,7 @@ function toggleTask(id) {
   if (_lastToggle[id] && now - _lastToggle[id] < 500) return;
   _lastToggle[id] = now;
   const list=getActiveList(); if (!list) return;
+  if (list.inactive) return; // frozen
   const t=list.tasks.find(t=>t.id===id); if (!t) return;
   t.done=!t.done;
   const ts=utc8().toISOString();
@@ -1123,6 +1496,7 @@ function toggleTask(id) {
 
 function toggleStep(taskId, si) {
   const list=getActiveList(); if (!list) return;
+  if (list.inactive) return; // frozen
   const k=`${taskId}_${si}`;
   list.stepDone[k]=!list.stepDone[k];
   const t=list.tasks.find(t=>t.id===taskId);
@@ -1143,7 +1517,7 @@ function addManualTask() {
   const list = getActiveList(); if (!list || list.inactive) return;
   const inp = document.getElementById('manualInp');
   const name = inp.value.trim(); if (!name) return;
-  const task = { id: 'task_'+Date.now(), name, duration: 20, steps: [], done: false };
+  const task = { id: 'task_'+Date.now(), name, duration: 0, steps: [], done: false, isManual: true };
   list.tasks.unshift(task);
   inp.value = '';
   save(); renderTasks(); updateProgress(); renderSidebar();
@@ -1202,7 +1576,7 @@ function editDur(id) {
   const list = getActiveList(); if (!list) return;
   const t = list.tasks.find(t=>t.id===id); if (!t) return;
   const el = document.getElementById('dur_'+id); if (!el) return;
-  el.outerHTML = `<input class="dur-input" id="durInp_${id}" value="${t.duration}" min="1" onblur="saveDur('${id}')" onkeydown="if(event.key==='Enter')saveDur('${id}')" />`;
+  el.outerHTML = `<input class="dur-input" id="durInp_${id}" value="${t.duration}" min="0" onblur="saveDur('${id}')" onkeydown="if(event.key==='Enter')saveDur('${id}')" />`;
   setTimeout(()=>document.getElementById('durInp_'+id)?.select(),0);
 }
 
@@ -1210,7 +1584,7 @@ function saveDur(id) {
   const list = getActiveList(); if (!list) return;
   const t = list.tasks.find(t=>t.id===id); if (!t) return;
   const inp = document.getElementById('durInp_'+id);
-  if (inp) { const v = parseInt(inp.value); if (v > 0) t.duration = v; save(); renderTasks(); updateProgress(); }
+  if (inp) { const v = parseInt(inp.value); if (v >= 0) t.duration = v; save(); renderTasks(); updateProgress(); }
 }
 
 // ─── PROGRESS & RATING ────────────────────────────────────
@@ -1221,16 +1595,19 @@ function updateProgress() {
   const pct = totalMins ? Math.round((doneMins / totalMins) * 100) : 0;
   const total = list.tasks.length;
 
-  const pw = document.getElementById('progWrap');
-  pw.style.display = total ? 'flex' : 'none';
-  document.getElementById('progLabel').textContent = `${doneMins}/${totalMins}m`;
-  document.getElementById('progFill').style.width = pct + '%';
-  document.getElementById('progPct').textContent = pct + '%';
+  const gp = document.getElementById('globalProg');
+  if (total > 0) {
+    gp.classList.add('visible');
+    document.getElementById('gpLabel').textContent = `${doneMins}/${totalMins}m`;
+    document.getElementById('gpFill').style.width = pct + '%';
+    document.getElementById('gpPct').textContent = pct + '%';
+    document.getElementById('gpEmoji').textContent = getRating(pct, total);
+  } else {
+    gp.classList.remove('visible');
+  }
 
-  const rating = getRating(pct, total);
   const rd = document.getElementById('ratingDisplay');
-  if (total > 0) { rd.style.display = 'flex'; document.getElementById('ratingEmoji').textContent = rating || '—'; }
-  else rd.style.display = 'none';
+  rd.style.display = 'none'; // rating now shown in global prog bar
 }
 
 function getRating(pct, total) {
@@ -1294,9 +1671,10 @@ async function organiseTasks() {
   const listName = list.name || getAutoName(list);
 
   try {
+    const allTags = ['work','admin','wellness','kids','home',...(S.customTags||[]).map(t=>t.name.toLowerCase())];
     const text = await callAI(
-      [{role:'user', content:`Current time (UTC+8): ${timeStr}. Status: ${phase}.\nList context: "${listName}" — use this to understand what the tasks are about and expand abbreviations accordingly.\n\nNew tasks to add: "${input}"\nExisting tasks: ${list.tasks.map(t=>t.name).join(', ') || 'none'}\n\nReturn ONLY a raw JSON array of NEW tasks. Each: {id(unique string),name(clear descriptive name max 8 words using list context),duration(number mins),steps(array 2-3 short action strings each max 8 words),done(false)}\n\nBe realistic with durations. Don't duplicate existing tasks. Use the list name to give tasks proper full names.`}],
-      'You are a task organiser. Use the list context to expand short task names into clear full descriptions. Return only valid JSON array, nothing else.'
+      [{role:'user', content:`Current time (UTC+8): ${timeStr}. Status: ${phase}.\nList context: "${listName}" — use this to understand what the tasks are about and expand abbreviations accordingly.\n\nNew tasks to add: "${input}"\nExisting tasks: ${list.tasks.map(t=>taskDisplayName(t)).join(', ') || 'none'}\n\nAvailable tags: ${allTags.join(', ')}\n\nReturn ONLY a raw JSON array of NEW tasks. Each: {id(unique string),name(clear descriptive name max 8 words using list context),duration(number mins),steps(array 2-3 short action strings each max 8 words),done(false),tag(one tag from the available list that best fits this task)}\n\nBe realistic with durations. Don't duplicate existing tasks. Use the list name to give tasks proper full names.`}],
+      'You are a task organiser. Use the list context to expand short task names into clear full descriptions. Assign the most fitting tag to each task. Return only valid JSON array, nothing else.'
     );
     pendingTasks = JSON.parse(text.replace(/```json|```/g, '').trim());
 
@@ -1313,11 +1691,19 @@ async function organiseTasks() {
 }
 
 function renderConfirmList() {
+  const allTags = ['work','admin','wellness','kids','home',...(S.customTags||[]).map(t=>t.name.toLowerCase())];
+  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠',documents:'📄'};
   document.getElementById('confirmList').innerHTML = pendingTasks.map((t, ti) => `
     <div class="confirm-item">
       <div class="confirm-item-row1">
         <input class="confirm-inp confirm-name-inp" value="${t.name}" onchange="pendingTasks[${ti}].name=this.value" placeholder="Task name" />
-        <input class="confirm-inp confirm-dur-inp" type="number" value="${t.duration}" min="1" onchange="pendingTasks[${ti}].duration=parseInt(this.value)||t.duration" placeholder="mins" />
+        <input class="confirm-inp confirm-dur-inp" type="number" value="${t.duration}" min="0" onchange="pendingTasks[${ti}].duration=parseInt(this.value)||0" placeholder="mins" />
+      </div>
+      <div style="margin-bottom:8px;">
+        <select class="confirm-pri" onchange="pendingTasks[${ti}].tag=this.value" style="width:100%;">
+          <option value="">— no tag —</option>
+          ${allTags.map(tag=>`<option value="${tag}" ${t.tag===tag?'selected':''}>${tagEmojis[tag]||'🏷️'} ${tag}</option>`).join('')}
+        </select>
       </div>
       <div class="confirm-steps" id="csteps_${ti}">
         ${(t.steps||[]).map((s,si)=>`
@@ -1348,7 +1734,7 @@ function removeConfirmStep(ti, si) {
 
 function confirmTasks() {
   const list=getActiveList(); if (!list) return;
-  list.tasks=[...list.tasks,...pendingTasks];
+  list.tasks=[...pendingTasks,...list.tasks];
   document.getElementById('dumpInp').value='';
   document.getElementById('confirmModal').classList.remove('show');
   save(); renderTasks(); updateProgress();
@@ -1374,7 +1760,7 @@ async function sendChat() {
   const thinking=addBubble('ai','Thinking...'); thinking.classList.add('thinking');
 
   const list=getActiveList();
-  const taskSum=list?.tasks.length?list.tasks.map(t=>`- ${t.name} (${t.priority}, ${t.done?'✓':'pending'}, ${t.duration}m)`).join('\n'):'No tasks.';
+  const taskSum=list?.tasks.length?list.tasks.map(t=>taskSummaryLine(t)).join('\n'):'No tasks.';
   const inactive=S.lists.filter(l=>l.inactive).slice(-5).map(l=>`${getAutoName(l)}: ${l.completionRate}% ${l.rating}`).join('\n');
   const t=utc8();
 
@@ -1393,151 +1779,253 @@ async function sendChat() {
 }
 
 // ─── ANALYTICS ────────────────────────────────────────────
+function getActiveLens() {
+  if (!S.activeLensId) return null;
+  return (S.lenses||[]).find(l=>l.id===S.activeLensId) || null;
+}
+
+function lensContext() {
+  const lens = getActiveLens();
+  if (!lens) return null;
+  return `This person defines productive as follows — use this as your lens for ALL analysis:\n"${lens.definition}"\n\nTag meanings: Work=business/client tasks, Admin=paperwork/bills/orders, Wellness=self-care/health, Kids=child-related, Home=household, Documents=paperwork. Custom tags: ${(S.customTags||[]).map(t=>`${t.name}=${t.desc}`).join('; ')||'none'}.`;
+}
+
 function renderAnalytics() {
-  const done=S.lists.filter(l=>l.inactive);
+  const done = S.lists.filter(l => l.inactive);
   if (!done.length) {
-    document.getElementById('analyticsEmpty').style.display='block';
-    document.getElementById('analyticsContent').style.display='none';
+    document.getElementById('analyticsEmpty').style.display = 'block';
+    document.getElementById('analyticsContent').style.display = 'none';
     return;
   }
-  document.getElementById('analyticsEmpty').style.display='none';
-  document.getElementById('analyticsContent').style.display='flex';
+  document.getElementById('analyticsEmpty').style.display = 'none';
+  document.getElementById('analyticsContent').style.display = 'flex';
 
-  const avgRate=Math.round(done.reduce((s,l)=>s+l.completionRate,0)/done.length);
-  const totalDone=done.reduce((s,l)=>s+l.tasks.filter(t=>t.done).length,0);
-  const totalTasks=done.reduce((s,l)=>s+l.tasks.length,0);
+  // ── TREND ──
+  const recent = done.slice(-5);
+  const prev = done.slice(-10, -5);
+  const avgRecent = recent.reduce((s,l) => s+l.completionRate, 0) / recent.length;
+  const avgPrev = prev.length ? prev.reduce((s,l) => s+l.completionRate, 0) / prev.length : null;
+  const avgAll = Math.round(done.reduce((s,l) => s+l.completionRate, 0) / done.length);
 
-  // Time patterns from tick data
-  const firstTicks=done.filter(l=>l.firstTick).map(l=>new Date(l.firstTick).getHours());
-  const lastTicks=done.filter(l=>l.lastTick).map(l=>new Date(l.lastTick).getHours());
-  const avgStart=firstTicks.length?Math.round(firstTicks.reduce((a,b)=>a+b,0)/firstTicks.length):null;
-  const avgEnd=lastTicks.length?Math.round(lastTicks.reduce((a,b)=>a+b,0)/lastTicks.length):null;
+  // Efficiency: % of lists that were 80%+ complete
+  const highComp = done.filter(l => l.completionRate >= 80).length;
+  const effPct = Math.round((highComp / done.length) * 100);
 
-  document.getElementById('statsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-lbl">Avg Completion</div><div class="stat-val">${avgRate}%</div><div class="stat-sub">${done.length} lists archived</div></div>
-    <div class="stat-card"><div class="stat-lbl">Tasks Done</div><div class="stat-val">${totalDone}</div><div class="stat-sub">out of ${totalTasks} total</div></div>
-    <div class="stat-card"><div class="stat-lbl">Avg Start Time</div><div class="stat-val">${avgStart!==null?avgStart+':00':'—'}</div><div class="stat-sub">when you first tick</div></div>
-    <div class="stat-card"><div class="stat-lbl">Avg End Time</div><div class="stat-val">${avgEnd!==null?avgEnd+':00':'—'}</div><div class="stat-sub">when you last tick</div></div>
-  `;
+  let arrow = '→', arrowClass = 'flat', label = 'Steady', sub = '';
+  if (avgPrev !== null) {
+    const diff = avgRecent - avgPrev;
+    if (diff >= 8) { arrow = '↗'; arrowClass = 'up'; label = 'Improving'; sub = `+${Math.round(diff)}% vs previous 5 lists`; }
+    else if (diff <= -8) { arrow = '↘'; arrowClass = 'down'; label = 'Declining'; sub = `${Math.round(diff)}% vs previous 5 lists`; }
+    else { sub = `Within ${Math.abs(Math.round(diff))}% of previous 5 lists`; }
+  } else { sub = `Based on ${done.length} list${done.length>1?'s':''} so far`; }
 
-  // Rating breakdown
-  const rCounts={heart:0,star:0,rainbow:0,perfect:0};
-  done.forEach(l=>{
-    if(l.rating==='❤️⭐🌈✨') rCounts.perfect++;
-    else if(l.rating==='❤️⭐🌈') rCounts.rainbow++;
-    else if(l.rating==='❤️⭐') rCounts.star++;
-    else if(l.rating==='❤️') rCounts.heart++;
-  });
-  const total=done.length;
-  document.getElementById('ratingBreakdown').innerHTML=[
-    {e:'❤️⭐🌈✨',n:'Perfect (100%)',c:rCounts.perfect},
-    {e:'❤️⭐🌈',n:'Rainbow (80–99%)',c:rCounts.rainbow},
-    {e:'❤️⭐',n:'Star (50–79%)',c:rCounts.star},
-    {e:'❤️',n:'Heart (1–49%)',c:rCounts.heart},
-  ].map(r=>`<div class="rating-row">
-    <div class="rating-emoji">${r.e}</div>
-    <div class="rating-info"><div class="rating-name">${r.n}</div><div class="rating-pct">${r.c} lists (${Math.round((r.c/total)*100)}%)</div></div>
-    <div class="rating-bar-wrap"><div class="rating-bar" style="width:${Math.round((r.c/total)*100)}%"></div></div>
-  </div>`).join('');
+  document.getElementById('trendArrow').textContent = arrow;
+  document.getElementById('trendArrow').className = 'trend-arrow ' + arrowClass;
+  document.getElementById('trendLabel').textContent = label;
+  document.getElementById('trendSub').textContent = sub;
+  document.getElementById('trendAvg').textContent = avgAll + '%';
+  document.getElementById('trendEff').textContent = effPct + '%';
+  document.getElementById('trendLists').textContent = done.length;
 
-  // Time patterns
-  if (avgStart!==null && avgEnd!==null) {
-    document.getElementById('timePatterns').innerHTML=`
-      <div class="bar-row"><span class="bar-lbl">Avg start</span><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,(avgStart/24)*100)}%;background:var(--orange)"></div></div><span class="bar-val">${avgStart}:00</span></div>
-      <div class="bar-row"><span class="bar-lbl">Avg end</span><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,(avgEnd/24)*100)}%;background:var(--purple)"></div></div><span class="bar-val">${avgEnd}:00</span></div>
-      <div class="bar-row"><span class="bar-lbl">Avg session</span><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,((avgEnd-avgStart)/12)*100)}%;background:var(--blue)"></div></div><span class="bar-val">${Math.max(0,avgEnd-avgStart)}h</span></div>
-    `;
+  // ── SPARKLINE ──
+  const sparkData = done.slice(-12);
+  document.getElementById('sparkSub').textContent = `Last ${sparkData.length} lists`;
+  const maxPct = 100;
+  document.getElementById('sparklineWrap').innerHTML = sparkData.map((l, i) => {
+    const h = Math.max(4, Math.round((l.completionRate / maxPct) * 50));
+    const color = l.completionRate >= 80 ? 'var(--green)' : l.completionRate >= 50 ? 'var(--orange)' : 'var(--red)';
+    const d = new Date(l.created);
+    const dateStr = d.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
+    return `<div class="spark-bar-wrap" title="${getAutoName(l)}: ${l.completionRate}% · ${dateStr}">
+      <div class="spark-bar" style="height:${h}px;background:${color}"></div>
+      <div class="spark-pct">${l.completionRate}%</div>
+    </div>`;
+  }).join('');
+
+  // ── TIME PATTERNS ──
+  const firstTicks = done.filter(l=>l.firstTick).map(l=>new Date(l.firstTick).getHours());
+  const lastTicks = done.filter(l=>l.lastTick).map(l=>new Date(l.lastTick).getHours());
+  const avgStart = firstTicks.length ? Math.round(firstTicks.reduce((a,b)=>a+b,0)/firstTicks.length) : null;
+  const avgEnd = lastTicks.length ? Math.round(lastTicks.reduce((a,b)=>a+b,0)/lastTicks.length) : null;
+  const timePlain = document.getElementById('timePlain');
+  if (avgStart !== null && avgEnd !== null) {
+    const sessionH = Math.max(0, avgEnd - avgStart);
+    const startLabel = avgStart < 12 ? `${avgStart}am` : avgStart === 12 ? '12pm' : `${avgStart-12}pm`;
+    const endLabel = avgEnd < 12 ? `${avgEnd}am` : avgEnd === 12 ? '12pm' : `${avgEnd-12}pm`;
+    const peak = avgStart <= 10 ? 'morning person 🌅' : avgStart <= 13 ? 'midday starter 🌤' : 'afternoon worker 🌆';
+    timePlain.innerHTML = `You're a <strong>${peak}</strong><br>Usually start around <strong>${startLabel}</strong><br>Usually wrap up by <strong>${endLabel}</strong><br>Average session: <strong>~${sessionH} hour${sessionH!==1?'s':''}</strong>`;
   } else {
-    document.getElementById('timePatterns').innerHTML='<div style="font-size:0.78rem;color:var(--ink-faint);font-style:italic;">Archive more lists to see patterns</div>';
+    timePlain.innerHTML = '<span style="font-style:italic;color:var(--ink-faint)">Tick tasks to track time patterns</span>';
   }
 
-  // List history
-  document.getElementById('listHistory').innerHTML=done.slice(-10).reverse().map(l=>`
-    <div class="hist-row">
-      <span class="hist-name">${getAutoName(l)}</span>
-      <div class="hist-bar-wrap"><div class="hist-bar" style="width:${l.completionRate}%"></div></div>
+  // ── EFFICIENCY ──
+  const effPlain = document.getElementById('effPlain');
+  const totalTasks = done.reduce((s,l) => s+l.tasks.length, 0);
+  const doneTasks = done.reduce((s,l) => s+l.tasks.filter(t=>t.done).length, 0);
+  const taskRate = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+  const streakLists = [...done].reverse();
+  let streak = 0;
+  for (const l of streakLists) { if (l.completionRate >= 80) streak++; else break; }
+  effPlain.innerHTML = `<div class="eff-score">${effPct}%</div>
+    Lists hitting 80%+ target<br>
+    <strong>${doneTasks}/${totalTasks}</strong> tasks completed overall<br>
+    Task completion rate: <strong>${taskRate}%</strong><br>
+    ${streak > 1 ? `🔥 <strong>${streak} lists</strong> in a row at 80%+` : streak === 1 ? '1 list at 80%+ recently' : 'Keep going to build a streak'}`;
+
+  // ── LIST HISTORY ──
+  document.getElementById('listHistory').innerHTML = done.slice(-10).reverse().map(l => {
+    const d = new Date(l.created);
+    const dateStr = d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+    const taskCount = l.tasks.length;
+    const doneCount = l.tasks.filter(t=>t.done).length;
+    const color = l.completionRate >= 80 ? 'var(--green)' : l.completionRate >= 50 ? 'var(--orange)' : '#e07070';
+    return `<div class="hist-row" onclick="openCalList('${l.id}')">
+      <div class="hist-info">
+        <div class="hist-name">${getAutoName(l)}</div>
+        <div class="hist-meta">${dateStr} · ${doneCount}/${taskCount} tasks</div>
+      </div>
+      <div class="hist-bar-wrap"><div class="hist-bar" style="width:${l.completionRate}%;background:${color}"></div></div>
       <span class="hist-pct">${l.completionRate}%</span>
       <span class="hist-rating">${l.rating}</span>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+function renderBullets(text, elId) {
+  // Parse numbered or bulleted lines into clean <ul>
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const items = lines.map(l => l.replace(/^[\d\.\-\*›•]+\s*/, '').trim()).filter(l => l.length > 3);
+  const el = document.getElementById(elId);
+  if (items.length) {
+    el.innerHTML = `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+  } else {
+    el.textContent = text;
+  }
 }
 
 async function genSkipCoach() {
-  const done = S.lists.filter(l => l.inactive).slice(-30); // cap at 30
+  const done = S.lists.filter(l => l.inactive).slice(-30);
   if (!done.length) { alert('Archive some lists first!'); return; }
+  const lens = getActiveLens();
+  if (!lens) {
+    document.getElementById('skipCoachOutput').innerHTML = '<div class="no-lens-notice"><strong>No active lens</strong>Set a lens in Settings → My Lenses to unlock AI coaching personalised to your definition of productive.</div>';
+    return;
+  }
   document.getElementById('skipSpin').style.display = 'inline-block';
-  document.getElementById('skipTxt').textContent = 'Analysing...';
+  document.getElementById('skipTxt').textContent = '...';
 
   const skipped = [];
-  done.forEach(l => l.tasks.filter(t => !t.done).forEach(t => skipped.push(t.name)));
+  done.forEach(l => l.tasks.filter(t => !t.done && !(t.isManual && S.manualPrivate)).forEach(t => skipped.push(`${t.name} [tag:${t.tag||'none'}] (${t.duration}m)`)));
 
   if (!skipped.length) {
-    document.getElementById('skipCoachText').textContent = "You've completed everything you set out to do! Impressive.";
-    document.getElementById('skipCoachText').style.fontStyle = 'normal';
+    document.getElementById('skipCoachOutput').innerHTML = '🎉 You\'ve completed everything. Nothing to skip!';
     document.getElementById('skipSpin').style.display = 'none';
-    document.getElementById('skipTxt').textContent = 'Analyse My Skipped Tasks';
+    document.getElementById('skipTxt').textContent = 'Analyse';
     return;
   }
 
   try {
     const coach = await callAI(
-      [{role:'user', content:`Here are all the tasks I've left incomplete across my lists:\n${skipped.join(', ')}\n\nAs my productivity coach, analyse these in 3-4 sentences. Group them into themes or categories (don't list every task name). Tell me what types of things I consistently avoid, why that might be, and give me 1-2 specific strategies to tackle these patterns. Be warm but honest.`}],
-      'You are a warm, insightful productivity coach. Identify patterns and categories in skipped tasks, not individual items. Be specific and actionable.'
+      [{role:'user', content:`My incomplete tasks across ${done.length} lists (with tag and time estimates):\n${skipped.join(', ')}\n\nIdentify 3-4 specific patterns. For each: name the pattern, what it reveals about my work habits, and one concrete fix. Format as a numbered list, one pattern per line. Be direct, specific to MY tasks, not generic.`}],
+      lensContext() + '\n\nYou are a sharp productivity coach. Give specific, actionable bullet points. No intros or conclusions. Just 3-4 numbered insights. Each under 25 words.'
     );
-    document.getElementById('skipCoachText').textContent = coach;
-    document.getElementById('skipCoachText').style.fontStyle = 'normal';
+    renderBullets(coach, 'skipCoachOutput');
   } catch(e) {
-    document.getElementById('skipCoachText').textContent = 'Could not generate. Check your API key.';
+    document.getElementById('skipCoachOutput').textContent = 'Could not generate. Check your API key.';
   }
   document.getElementById('skipSpin').style.display = 'none';
-  document.getElementById('skipTxt').textContent = 'Refresh Analysis';
+  document.getElementById('skipTxt').textContent = 'Refresh';
 }
 
 async function genInsight() {
-  const done = S.lists.filter(l=>l.inactive).slice(-30); // cap at 30
+  const done = S.lists.filter(l=>l.inactive).slice(-30);
   if (!done.length) { alert('Archive some lists first!'); return; }
+  const lens = getActiveLens();
+  if (!lens) {
+    document.getElementById('insightOutput').innerHTML = '<div class="no-lens-notice"><strong>No active lens</strong>Set a lens in Settings → My Lenses to unlock AI coaching personalised to your definition of productive.</div>';
+    return;
+  }
   document.getElementById('insSpin').style.display='inline-block';
-  document.getElementById('insTxt').textContent='Analysing...';
-  const data=done.slice(-10).map(l=>`${getAutoName(l)}: ${l.completionRate}% ${l.rating}. Tasks: ${l.tasks.map(t=>(t.done?'✓':'✗')+t.name).join(', ')}`).join('\n');
+  document.getElementById('insTxt').textContent='...';
+
+  const avgAll = Math.round(done.reduce((s,l)=>s+l.completionRate,0)/done.length);
+  const recent5avg = Math.round(done.slice(-5).reduce((s,l)=>s+l.completionRate,0)/Math.min(5,done.length));
+  const highDays = done.filter(l=>l.completionRate>=80).length;
+  const data = done.slice(-10).map(l=>`${getAutoName(l)}: ${l.completionRate}% — Done: ${l.tasks.filter(t=>t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}. Skipped: ${l.tasks.filter(t=>!t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}`).join('\n');
+
   try {
-    const insight=await callAI([{role:'user',content:`My archived lists:\n${data}\n\nGive me 4-5 sentences of specific personalised coaching: patterns you see, what I do well, 2-3 actionable improvements. Be direct and specific.`}],'You are an expert productivity coach. Be specific to THIS person\'s data. No generic advice.');
-    document.getElementById('insightText').textContent=insight;
-    document.getElementById('insightText').style.fontStyle='normal';
-  } catch(e) { document.getElementById('insightText').textContent='Could not generate. Check API key.'; }
+    const insight = await callAI(
+      [{role:'user', content:`My stats: ${done.length} lists total, ${avgAll}% avg completion, ${recent5avg}% recent avg, ${highDays} lists at 80%+.\n\nMy last 10 lists (task names include their tag in brackets):\n${data}\n\nGive me 4 specific coaching points as a numbered list:\n1. What I'm genuinely good at (be specific, reference my productivity definition)\n2. My biggest efficiency leak right now\n3. A pattern in what I skip (name the theme, relate to my definition of productive)\n4. One concrete thing to do differently next week\n\nUse my actual task names. Each point max 20 words. No filler.`}],
+      lensContext() + '\n\nYou are a direct productivity coach. 4 numbered bullet points only. Specific to this person\'s data and their definition of productive. No intro, no conclusion, no generic advice.'
+    );
+    renderBullets(insight, 'insightOutput');
+  } catch(e) {
+    document.getElementById('insightOutput').textContent = 'Could not generate. Check API key.';
+  }
   document.getElementById('insSpin').style.display='none';
-  document.getElementById('insTxt').textContent='Generate Insight';
+  document.getElementById('insTxt').textContent='Refresh';
 }
 
 // ─── WEEKLY REPORT ────────────────────────────────────────
 async function genReport() {
-  const done=S.lists.filter(l=>l.inactive);
+  const done = S.lists.filter(l=>l.inactive);
   if (!done.length) { alert('Archive some lists first!'); return; }
-  document.getElementById('repBtn').disabled=true;
-  document.getElementById('repSpin').style.display='inline-block';
-  document.getElementById('repTxt').textContent='Generating...';
+  const lens = getActiveLens();
+  if (!lens) {
+    document.getElementById('reportEmpty').style.display = 'block';
+    document.getElementById('reportEmpty').innerHTML = '<div class="ei">🔭</div><p>Set an active lens in <strong>Settings → My Lenses</strong> to unlock your report. AI needs your definition of productive to give meaningful coaching.</p>';
+    document.getElementById('reportContent').style.display = 'none';
+    return;
+  }
+  document.getElementById('repBtn').disabled = true;
+  document.getElementById('repSpin').style.display = 'inline-block';
+  document.getElementById('repTxt').textContent = '...';
 
-  const week=done.slice(-7);
-  const avg=Math.round(week.reduce((s,l)=>s+l.completionRate,0)/week.length);
-  const totalD=week.reduce((s,l)=>s+l.tasks.filter(t=>t.done).length,0);
-  const best=week.reduce((b,l)=>l.completionRate>b.completionRate?l:b,week[0]);
-  const data=week.map(l=>`${getAutoName(l)}: ${l.completionRate}% ${l.rating}. Done: ${l.tasks.filter(t=>t.done).map(t=>t.name).join(', ')||'none'}. Skipped: ${l.tasks.filter(t=>!t.done).map(t=>t.name).join(', ')||'none'}`).join('\n');
+  const week = done.slice(-7);
+  const avg = Math.round(week.reduce((s,l)=>s+l.completionRate,0)/week.length);
+  const totalD = week.reduce((s,l)=>s+l.tasks.filter(t=>t.done).length,0);
+  const totalT = week.reduce((s,l)=>s+l.tasks.length,0);
+  const best = week.reduce((b,l)=>l.completionRate>b.completionRate?l:b,week[0]);
+  const data = week.map(l=>`${getAutoName(l)}: ${l.completionRate}%. Done: ${l.tasks.filter(t=>t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}. Skipped: ${l.tasks.filter(t=>!t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}`).join('\n');
 
   try {
-    const report=await callAI([{role:'user',content:`Weekly report for my last ${week.length} lists:\n\n${data}\n\nWrite a personalised report with these sections (## headers):\n## Overview\n## What Went Well\n## Patterns To Address\n## Plan For Next Week\n\nUse my actual task names and real numbers. Be specific.`}],'You are an expert productivity coach. Write warm, specific, actionable weekly reports.');
-    document.getElementById('reportEmpty').style.display='none';
-    document.getElementById('reportContent').style.display='flex';
-    document.getElementById('weekStats').innerHTML=`
-      <div class="wk-s"><div class="wv">${avg}%</div><div class="wl">Avg Completion</div></div>
-      <div class="wk-s"><div class="wv">${totalD}</div><div class="wl">Tasks Done</div></div>
-      <div class="wk-s"><div class="wv">${week.length}</div><div class="wl">Lists Done</div></div>
-      <div class="wk-s"><div class="wv">${best.completionRate}%</div><div class="wl">Best List</div></div>
+    const report = await callAI(
+      [{role:'user', content:`My last ${week.length} lists (${avg}% avg, ${totalD}/${totalT} tasks done, best: ${getAutoName(best)} at ${best.completionRate}%):\n\n${data}\n\nWrite a report in exactly 4 sections. Each section: a label line then 3 bullet points. Format:\n\nOVERVIEW\n- point\n- point\n- point\n\nWHAT WENT WELL\n- point\n- point\n- point\n\nPATTERNS TO FIX\n- point\n- point\n- point\n\nNEXT WEEK\n- point\n- point\n- point\n\nUse my actual task names, tags, and real numbers. Judge productivity through my definition. Each bullet max 20 words. Be specific not generic.`}],
+      lensContext() + '\n\nYou are a direct productivity coach. Output exactly 4 labelled sections each with 3 bullet points. No intro, no conclusion, no filler.'
+    );
+
+    document.getElementById('reportEmpty').style.display = 'none';
+    document.getElementById('reportContent').style.display = 'flex';
+    document.getElementById('weekStats').innerHTML = `
+      <div class="wk-s"><div class="wv">${avg}%</div><div class="wl">Avg completion</div></div>
+      <div class="wk-s"><div class="wv">${totalD}</div><div class="wl">Tasks done</div></div>
+      <div class="wk-s"><div class="wv">${week.length}</div><div class="wl">Lists</div></div>
+      <div class="wk-s"><div class="wv">${best.completionRate}%</div><div class="wl">Best list</div></div>
     `;
-    const html=report.replace(/^## (.+)$/gm,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<span class="hl">$1</span>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
-    document.getElementById('reportBody').innerHTML=`<p>${html}</p>`;
-  } catch(e) { alert('Could not generate. Check API key.'); }
-  document.getElementById('repBtn').disabled=false;
-  document.getElementById('repSpin').style.display='none';
-  document.getElementById('repTxt').textContent='Generate Report';
+
+    // Parse sections
+    const sectionEmojis = { 'OVERVIEW':'📋', 'WHAT WENT WELL':'✅', 'PATTERNS TO FIX':'⚠️', 'NEXT WEEK':'🎯' };
+    const sections = report.split(/\n(?=[A-Z\s]{4,20}\n)/).filter(s=>s.trim());
+    let cardsHtml = '';
+    sections.forEach(section => {
+      const lines = section.trim().split('\n').filter(l=>l.trim());
+      if (!lines.length) return;
+      const title = lines[0].trim();
+      const emoji = Object.keys(sectionEmojis).find(k => title.includes(k));
+      const displayTitle = (emoji ? sectionEmojis[emoji]+' ' : '') + title;
+      const bullets = lines.slice(1).map(l=>l.replace(/^[\-\*•›\d\.]+\s*/,'')).filter(l=>l.length>3);
+      cardsHtml += `<div class="report-section">
+        <h3>${displayTitle}</h3>
+        <ul>${bullets.map(b=>`<li>${b}</li>`).join('')}</ul>
+      </div>`;
+    });
+    document.getElementById('reportCards').innerHTML = cardsHtml || `<div class="report-section"><p style="font-size:0.8rem;color:var(--ink-dim)">${report}</p></div>`;
+  } catch(e) {
+    alert('Could not generate. Check API key.');
+  }
+  document.getElementById('repBtn').disabled = false;
+  document.getElementById('repSpin').style.display = 'none';
+  document.getElementById('repTxt').textContent = 'Regenerate';
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────
@@ -1581,6 +2069,263 @@ function clearAll() {
   }
 }
 
+// ─── TAG CHANGE ───────────────────────────────────────────
+function changeTaskTag(taskId, event) {
+  event.stopPropagation();
+  const list = getActiveList(); if (!list || list.inactive) return;
+  const t = list.tasks.find(t=>t.id===taskId); if (!t) return;
+  const allTags = ['work','admin','wellness','kids','home','documents',...(S.customTags||[]).map(ct=>ct.name.toLowerCase())];
+  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠',documents:'📄'};
+
+  // Remove any existing dropdown
+  document.querySelectorAll('.tag-dropdown-menu').forEach(m=>m.remove());
+
+  const menu = document.createElement('div');
+  menu.className = 'tag-dropdown-menu open';
+  menu.style.position = 'fixed';
+
+  const items = [['', '✕', 'Remove tag'], ...allTags.map(tag=>[tag, tagEmojis[tag]||'🏷️', tag])];
+  items.forEach(([val, emoji, label]) => {
+    const item = document.createElement('div');
+    item.className = 'tag-dropdown-item';
+    item.innerHTML = `<span>${emoji}</span><span>${label}</span>`;
+    if (val === t.tag) item.style.fontWeight = '700';
+    item.onclick = (e) => {
+      e.stopPropagation();
+      t.tag = val || undefined;
+      menu.remove();
+      save(); renderTasks();
+    };
+    menu.appendChild(item);
+  });
+
+  document.body.appendChild(menu);
+  const rect = event.target.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.left = rect.left + 'px';
+
+  setTimeout(() => {
+    const close = (e) => { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
+    document.addEventListener('click', close);
+  }, 0);
+}
+
+// ─── LENSES CRUD ──────────────────────────────────────────
+let editingLensId = null;
+
+function openLensModal(lensId) {
+  editingLensId = lensId;
+  const modal = document.getElementById('lensModal');
+  const lens = lensId ? (S.lenses||[]).find(l=>l.id===lensId) : null;
+  document.getElementById('lensModalTitle').textContent = lensId ? 'Edit Lens' : 'New Lens';
+  document.getElementById('lensNameInp').value = lens?.name || '';
+  document.getElementById('lensDefInp').value = lens?.definition || '';
+  modal.classList.add('show');
+  setTimeout(()=>document.getElementById('lensNameInp').focus(), 100);
+}
+
+function closeLensModal() {
+  document.getElementById('lensModal').classList.remove('show');
+  editingLensId = null;
+}
+
+function saveLens() {
+  const name = document.getElementById('lensNameInp').value.trim();
+  const definition = document.getElementById('lensDefInp').value.trim();
+  if (!name || !definition) { alert('Please fill in both the lens name and definition.'); return; }
+  if (!S.lenses) S.lenses = [];
+  if (editingLensId) {
+    const lens = S.lenses.find(l=>l.id===editingLensId);
+    if (lens) { lens.name = name; lens.definition = definition; }
+  } else {
+    S.lenses.push({ id: 'lens_'+Date.now(), name, definition });
+    // Auto-activate if first lens
+    if (S.lenses.length === 1) S.activeLensId = S.lenses[0].id;
+  }
+  save();
+  closeLensModal();
+  renderLensesList();
+  toast('Lens saved ✅');
+}
+
+function activateLens(id) {
+  S.activeLensId = S.activeLensId === id ? null : id;
+  save();
+  renderLensesList();
+  toast(S.activeLensId ? 'Lens activated ✅' : 'Lens deactivated');
+}
+
+function deleteLens(id) {
+  if (!window.confirm('Delete this lens?')) return;
+  S.lenses = (S.lenses||[]).filter(l=>l.id!==id);
+  if (S.activeLensId === id) S.activeLensId = null;
+  save();
+  renderLensesList();
+  toast('Lens deleted');
+}
+
+function renderLensesList() {
+  const el = document.getElementById('lensesList'); if (!el) return;
+  if (!S.lenses?.length) {
+    el.innerHTML = '<div class="lens-none-msg">No lenses yet. Create one to unlock AI coaching.</div>';
+    return;
+  }
+  el.innerHTML = S.lenses.map(l => {
+    const isActive = l.id === S.activeLensId;
+    return `<div class="lens-card ${isActive?'active-lens':''}">
+      <div class="lens-card-top">
+        <div class="lens-name">${l.name}</div>
+        ${isActive ? '<span class="lens-active-badge">Active</span>' : ''}
+      </div>
+      <div class="lens-def">${l.definition}</div>
+      <div class="lens-actions">
+        <button class="lens-btn primary" onclick="activateLens('${l.id}')">${isActive?'Deactivate':'Activate'}</button>
+        <button class="lens-btn" onclick="openLensModal('${l.id}')">Edit</button>
+        <button class="lens-btn danger" onclick="deleteLens('${l.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── CUSTOM TAGS CRUD ─────────────────────────────────────
+function openTagModal() {
+  document.getElementById('customTagNameInp').value = '';
+  document.getElementById('customTagDescInp').value = '';
+  document.getElementById('tagModal').classList.add('show');
+  setTimeout(()=>document.getElementById('customTagNameInp').focus(), 100);
+}
+
+function closeTagModal() {
+  document.getElementById('tagModal').classList.remove('show');
+}
+
+function saveCustomTag() {
+  const name = document.getElementById('customTagNameInp').value.trim();
+  const desc = document.getElementById('customTagDescInp').value.trim();
+  if (!name) { alert('Please enter a tag name.'); return; }
+  if (!S.customTags) S.customTags = [];
+  S.customTags.push({ id: 'ctag_'+Date.now(), name, desc });
+  save();
+  closeTagModal();
+  renderCustomTagsList();
+  toast(`Tag "${name}" added ✅`);
+}
+
+function deleteCustomTag(id) {
+  if (!window.confirm('Delete this tag?')) return;
+  S.customTags = (S.customTags||[]).filter(t=>t.id!==id);
+  save();
+  renderCustomTagsList();
+  toast('Tag deleted');
+}
+
+function renderCustomTagsList() {
+  const el = document.getElementById('customTagsList'); if (!el) return;
+  if (!S.customTags?.length) {
+    el.innerHTML = '<div class="lens-none-msg">No custom tags yet.</div>';
+    return;
+  }
+  el.innerHTML = S.customTags.map(t => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span class="tag-pill custom">🏷️ ${t.name}</span>
+      <span style="flex:1;font-size:0.74rem;color:var(--ink-dim);">${t.desc}</span>
+      <button class="lens-btn danger" onclick="deleteCustomTag('${t.id}')" style="padding:3px 8px;font-size:0.68rem;">✕</button>
+    </div>
+  `).join('');
+}
+
+// ─── TAGS TAB ─────────────────────────────────────────────
+const PRESET_TAGS = [
+  {name:'work',    emoji:'💼', label:'Work'},
+  {name:'admin',   emoji:'📋', label:'Admin'},
+  {name:'wellness',emoji:'🌿', label:'Wellness'},
+  {name:'kids',    emoji:'👧', label:'Kids'},
+  {name:'home',    emoji:'🏠', label:'Home'},
+];
+
+function getAllTags() {
+  const preset = PRESET_TAGS.map(t=>({...t, isCustom:false}));
+  const custom = (S.customTags||[]).map(t=>({name:t.name.toLowerCase(), emoji:'🏷️', label:t.name, desc:t.desc, isCustom:true}));
+  return [...preset, ...custom];
+}
+
+function getTaggedTasks() {
+  // All tasks from all inactive lists + active list
+  const allLists = S.lists;
+  const tasks = [];
+  allLists.forEach(l => {
+    l.tasks.forEach(t => {
+      if (t.tag) tasks.push({...t, listId:l.id, listName:getAutoName(l), listInactive:l.inactive});
+    });
+  });
+  return tasks;
+}
+
+function renderTagsTab() {
+  document.getElementById('tagsGrid').style.display = 'flex';
+  document.getElementById('tagsDetail').style.display = 'none';
+
+  const allTags = getAllTags();
+  const allTaggedTasks = getTaggedTasks();
+
+  document.getElementById('tagsGridInner').innerHTML = allTags.map(tag => {
+    const tasks = allTaggedTasks.filter(t=>t.tag===tag.name);
+    const done = tasks.filter(t=>t.done).length;
+    const rate = tasks.length ? Math.round((done/tasks.length)*100) : 0;
+    return `<div class="tag-card ${tasks.length?'':'opacity-60'}" onclick="showTagDetail('${tag.name}')">
+      <div class="tag-card-emoji">${tag.emoji}</div>
+      <div class="tag-card-name">${tag.label}</div>
+      <div class="tag-card-count">${tasks.length} task${tasks.length!==1?'s':''}</div>
+      ${tasks.length ? `<div class="tag-card-rate">${rate}% done</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function showTagDetail(tagName) {
+  document.getElementById('tagsGrid').style.display = 'none';
+  const detail = document.getElementById('tagsDetail');
+  detail.style.display = 'flex';
+
+  const allTags = getAllTags();
+  const tag = allTags.find(t=>t.name===tagName);
+  const allTaggedTasks = getTaggedTasks().filter(t=>t.tag===tagName);
+  const done = allTaggedTasks.filter(t=>t.done).length;
+  const rate = allTaggedTasks.length ? Math.round((done/allTaggedTasks.length)*100) : 0;
+
+  document.getElementById('tagsDetailHeader').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;">
+      <span style="font-size:2rem;">${tag?.emoji||'🏷️'}</span>
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--ink);">${tag?.label||tagName}</div>
+        <div style="font-size:0.72rem;color:var(--ink-dim);">${allTaggedTasks.length} tasks · ${done} done · ${rate}% completion</div>
+        ${tag?.desc ? `<div style="font-size:0.72rem;color:var(--ink-faint);margin-top:2px;font-style:italic;">${tag.desc}</div>` : ''}
+      </div>
+    </div>`;
+
+  if (!allTaggedTasks.length) {
+    document.getElementById('tagsDetailList').innerHTML = '<div class="empty-state"><div class="ei">🏷️</div><p>No tasks tagged with this yet.</p></div>';
+    return;
+  }
+
+  // Sort: incomplete first, then by list date
+  const sorted = [...allTaggedTasks].sort((a,b) => a.done - b.done);
+  document.getElementById('tagsDetailList').innerHTML = sorted.map(t => `
+    <div class="tag-task-row ${t.done?'done-task':''}" onclick="openCalList('${t.listId}')">
+      <div class="tag-task-check">${t.done?'✅':'⬜'}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="tag-task-name">${t.name}</div>
+        <div class="tag-task-meta">${t.listName} · ${t.duration}m ${t.listInactive?'· Archived':''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showTagsGrid() {
+  document.getElementById('tagsGrid').style.display = 'flex';
+  document.getElementById('tagsDetail').style.display = 'none';
+  renderTagsTab();
+}
+
 // ─── CONFETTI ─────────────────────────────────────────────
 function launchConfetti() {
   const cols=['#C2847A','#7AA894','#C4956A','#A48EC2','#7A9EC2','#DBA99F'];
@@ -1593,6 +2338,109 @@ function launchConfetti() {
       setTimeout(()=>el.remove(),4000);
     },i*15);
   }
+}
+
+// ─── PRIVACY HELPER ──────────────────────────────────────
+function taskDisplayName(t) {
+  return (t.isManual && S.manualPrivate) ? `[Private — ${t.duration}m]` : t.name;
+}
+function taskSummaryLine(t) {
+  const name = taskDisplayName(t);
+  return `- ${name} (${t.done?'✓':'pending'}, ${t.duration}m)`;
+}
+
+let calYear = utc8().getFullYear();
+let calMonth = utc8().getMonth();
+let calSelectedDate = null;
+
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+function renderCalendar() {
+  const now = utc8();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthLabel').textContent = `${monthNames[calMonth]} ${calYear}`;
+
+  // Build map of date → lists
+  const dateMap = {};
+  S.lists.forEach(l => {
+    const d = new Date(l.created);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (!dateMap[key]) dateMap[key] = [];
+    dateMap[key].push(l);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dayLabels.map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+
+  // Prev month padding
+  for(let i=0; i<firstDay; i++) {
+    const day = daysInPrev - firstDay + i + 1;
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${day}</div></div>`;
+  }
+
+  // Current month
+  for(let d=1; d<=daysInMonth; d++) {
+    const key = `${calYear}-${calMonth}-${d}`;
+    const hasList = !!dateMap[key];
+    const isToday = now.getFullYear()===calYear && now.getMonth()===calMonth && now.getDate()===d;
+    const isSelected = calSelectedDate && calSelectedDate.y===calYear && calSelectedDate.m===calMonth && calSelectedDate.d===d;
+    html += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${hasList?'has-list':''}" ontouchend="event.preventDefault();selectCalDay(${calYear},${calMonth},${d})" onclick="selectCalDay(${calYear},${calMonth},${d})">
+      <div class="cal-day-num">${d}</div>
+      ${hasList?'<div class="cal-dot"></div>':''}
+    </div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+
+  // Show selected date lists
+  if(calSelectedDate) showCalLists(calSelectedDate.y, calSelectedDate.m, calSelectedDate.d);
+}
+
+function selectCalDay(y, m, d) {
+  calSelectedDate = {y, m, d};
+  renderCalendar();
+}
+
+function showCalLists(y, m, d) {
+  const dateMap = {};
+  S.lists.forEach(l => {
+    const dt = new Date(l.created);
+    const key = `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
+    if (!dateMap[key]) dateMap[key] = [];
+    dateMap[key].push(l);
+  });
+  const key = `${y}-${m}-${d}`;
+  const lists = dateMap[key] || [];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const area = document.getElementById('calListArea');
+  if(!lists.length) {
+    area.innerHTML = `<div class="cal-date-heading">${d} ${monthNames[m]} ${y}</div><div style="font-size:0.8rem;color:var(--ink-faint);">No lists on this day.</div>`;
+    return;
+  }
+  let html = `<div class="cal-date-heading">${d} ${monthNames[m]} ${y}</div>`;
+  lists.forEach(l => {
+    const done = l.tasks.filter(t=>t.done).length;
+    const total = l.tasks.length;
+    const pct = total ? Math.round((done/total)*100) : 0;
+    html += `<div class="cal-list-card" ontouchend="event.preventDefault();openCalList('${l.id}')" onclick="openCalList('${l.id}')">
+      <div class="cal-list-card-name">${getAutoName(l)}</div>
+      <div class="cal-list-card-meta">${total} tasks · ${done} done · ${pct}% ${l.inactive?'· Inactive':''} ${l.rating||''}</div>
+    </div>`;
+  });
+  area.innerHTML = html;
+}
+
+function openCalList(id) {
+  S.activeListId = id;
+  save();
+  goTab('planner');
+  renderSidebar();
+  renderCurrentList();
 }
 
 function toast(msg) {
