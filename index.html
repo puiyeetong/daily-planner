@@ -197,7 +197,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .task-chk { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 5px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s; }
 .task-item.done .task-chk { background: var(--green); border-color: var(--green); }
 .task-body { flex: 1; min-width: 0; }
-.task-name { font-size: 0.84rem; font-weight: 600; color: var(--ink); line-height: 1.4; }
+.task-name { font-size: 1rem; font-weight: 700; color: var(--ink); line-height: 1.4; }
 .task-item.done .task-name { text-decoration: line-through; color: var(--ink-dim); }
 .task-right { display: none; } /* hidden — use task-meta-row instead */
 .task-meta-row { display: flex; align-items: center; gap: 5px; padding: 0 12px 8px 37px; flex-wrap: wrap; }
@@ -576,7 +576,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
   .task-list { padding: 10px; gap: 8px; }
   .task-item { border-radius: 10px; }
   .task-header { padding: 10px 10px; }
-  .task-name { font-size: 0.88rem; }
+  .task-name { font-size: 1.05rem; }
   .dur-tag { font-size: 0.7rem; padding: 3px 8px; }
   .check-btn { width: 22px; height: 22px; }
 
@@ -2462,8 +2462,8 @@ async function shareToWhatsApp(taskId) {
     const displayName = taskDisplayName(t);
     const stepsText = t.steps?.length ? `\nSteps involved:\n${t.steps.map(s=>`- ${s}`).join('\n')}` : '';
     const msg = await callAI(
-      [{role:'user', content:`Write a short WhatsApp message asking for help with this task:\n\nTask: ${displayName}${stepsText}\n\nFormat: Direct and friendly. Start with "Can you help with [task]?" and end with "Please, thank you!" Add one short sentence of context if the steps make it useful. No emojis. Just the message, nothing else.`}],
-      `${modeContext()}\n\nYou write natural, conversational WhatsApp messages. Short, warm, direct. No preamble, just the message itself.`
+      [{role:'user', content:`Write a short WhatsApp message instructing a domestic helper or staff to handle this task:\n\nTask: ${displayName}${stepsText}\n\nFormat: Direct and clear, boss to helper. Start with "Please [do the task]," then one sentence explaining why or what's needed, end with "Thank you." No fluff, no asking for favours. Just the message, nothing else.`}],
+      `${modeContext()}\n\nYou write short, direct WhatsApp instructions from an employer to domestic help. Clear, polite but authoritative. No preamble, just the message itself.`
     );
     const url = `https://wa.me/?text=${encodeURIComponent(msg.trim())}`;
     window.open(url, '_blank');
