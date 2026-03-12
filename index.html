@@ -1543,7 +1543,7 @@ function renderCurrentList() {
   updateProgress();
 }
 
-function renderTasks() {
+function renderTasks(animate) {
   const list=getActiveList();
   if (!list) return;
   const el=document.getElementById('taskList');
@@ -1555,7 +1555,33 @@ function renderTasks() {
     ...list.tasks.filter(t=>!t.done),
     ...list.tasks.filter(t=>t.done).sort((a,b) => new Date(b.completedAt||0) - new Date(a.completedAt||0))
   ];
+
+  // FLIP: record old positions before re-render
+  const oldPositions = {};
+  if (animate) {
+    el.querySelectorAll('.task-item').forEach(item => {
+      oldPositions[item.id] = item.getBoundingClientRect().top;
+    });
+  }
+
   el.innerHTML=sorted.map((t,i)=>taskHTML(t,i,list)).join('');
+
+  // FLIP: animate from old position to new
+  if (animate) {
+    el.querySelectorAll('.task-item').forEach(item => {
+      const oldTop = oldPositions[item.id];
+      if (oldTop === undefined) return;
+      const newTop = item.getBoundingClientRect().top;
+      const delta = oldTop - newTop;
+      if (Math.abs(delta) < 2) return;
+      item.style.transition = 'none';
+      item.style.transform = `translateY(${delta}px)`;
+      requestAnimationFrame(() => {
+        item.style.transition = 'transform 0.28s cubic-bezier(0.25,0.46,0.45,0.94)';
+        item.style.transform = 'translateY(0)';
+      });
+    });
+  }
 }
 
 function taskHTML(t, i, list) {
@@ -1826,7 +1852,7 @@ function dDrop(e,id){
   const [moved]=tasks.splice(fromI,1);
   tasks.splice(toI,0,moved);
   list.tasks=tasks; dragId=null;
-  save(); renderTasks();
+  save(); renderTasks(true);
 }
 
 // ─── TOUCH DRAG (mobile) ──────────────────────────────────
@@ -1898,7 +1924,7 @@ function initTouchDrag() {
           const [moved] = tasks.splice(fromI,1);
           tasks.splice(toI,0,moved);
           list.tasks = tasks;
-          save(); renderTasks();
+          save(); renderTasks(true);
         }
       }
     }
