@@ -138,6 +138,11 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .list-item-meta { font-size: 0.64rem; color: var(--ink-dim); margin-top: 2px; }
 .list-item-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 5px; }
 .list-item-bar { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.mode-opt { padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--border); cursor: pointer; transition: all 0.15s; }
+.mode-opt:hover { background: var(--surface2); }
+.mode-opt.active { border-color: var(--rose); background: var(--surface2); }
+.mode-opt-title { font-size: 0.8rem; font-weight: 600; color: var(--ink); }
+.mode-opt-desc { font-size: 0.71rem; color: var(--ink-dim); margin-top: 2px; }
 .list-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
 .list-item:hover .list-actions { opacity: 1; }
 .list-action-btn { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; transition: all 0.15s; }
@@ -336,6 +341,19 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .report-section ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .report-section li { font-size: 0.8rem; color: var(--ink-dim); line-height: 1.6; display: flex; gap: 8px; }
 .report-section li::before { content: '›'; color: var(--rose); font-weight: 700; flex-shrink: 0; }
+.saved-report { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-top: 8px; }
+.saved-report-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; }
+.saved-report-head:hover { background: var(--surface2); }
+.saved-report-title { font-size: 0.78rem; font-weight: 600; color: var(--ink-dim); }
+.saved-report-actions { display: flex; gap: 8px; align-items: center; }
+.saved-report-toggle { font-size: 0.72rem; color: var(--ink-faint); }
+.saved-report-del { font-size: 0.72rem; color: var(--ink-faint); background: none; border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+.saved-report-del:hover { background: var(--surface3); color: var(--rose); }
+.saved-report-body { display: none; padding: 0 14px 14px; flex-direction: column; gap: 10px; }
+.saved-report-body.open { display: flex; }
+.saved-report-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.saved-report-stats .wk-s { flex: 1; min-width: 60px; background: var(--surface2); border-radius: 8px; padding: 8px; text-align: center; }
+#reportHistory { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
 
 
 /* ── SETTINGS ── */
@@ -829,6 +847,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
       <div class="week-stats" id="weekStats"></div>
       <div id="reportCards"></div>
     </div>
+    <div id="reportHistory"></div>
   </div>
 
   <!-- CALENDAR -->
@@ -911,6 +930,24 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
       </div>
     </div>
     <div class="s-card">
+      <h3>👤 App Mode</h3>
+      <div style="font-size:0.75rem;color:var(--ink-dim);margin-bottom:10px;">Changes how AI writes and frames your tasks.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="modePicker">
+        <div class="mode-opt" id="mode_adult_me" onclick="setMode('adult_me')">
+          <div class="mode-opt-title">👤 Adult — Me</div>
+          <div class="mode-opt-desc">Tasks are yours. First person, personal goals.</div>
+        </div>
+        <div class="mode-opt" id="mode_adult_staff" onclick="setMode('adult_staff')">
+          <div class="mode-opt-title">👔 Adult — Staff</div>
+          <div class="mode-opt-desc">Tasks are instructions you give to others. Employer tone.</div>
+        </div>
+        <div class="mode-opt" id="mode_kid" onclick="setMode('kid')">
+          <div class="mode-opt-title">👧 Kid</div>
+          <div class="mode-opt-desc">Tasks belong to a child. Simple, friendly language.</div>
+        </div>
+      </div>
+    </div>
+    <div class="s-card">
       <h3>⏰ Work Hours</h3>
       <div class="s-hours">
         <div class="s-row"><label>Start</label><input type="time" class="s-inp" id="wsIn" value="10:00" /></div>
@@ -966,6 +1003,7 @@ let S = {
   wHours: {start:'10:00', end:'19:00'},
   supabase: {url:'', key:''},
   manualPrivate: true,
+  mode: 'adult_me', // adult_me | adult_staff | kid
   lists: [],
   activeListId: null,
   records: [],
@@ -973,6 +1011,7 @@ let S = {
   lenses: [],
   activeLensId: null,
   customTags: [], // [{id, name, desc, emoji}]
+  reports: [], // [{id, ts, statsHtml, cardsHtml}]
 };
 let setupAI = 'claude';
 let pendingTasks = [];
@@ -1019,6 +1058,7 @@ function init() {
   }, 1000);
 
   addBubble('ai', "Hi! I'm your planning assistant. Dump your tasks above and I'll organise them. Ask me anything once your list is ready.");
+  renderModePicker();
 }
 
 function save() {
@@ -1296,7 +1336,8 @@ function goTab(tab) {
   if (tab==='analytics') renderAnalytics();
   if (tab==='calendar') renderCalendar();
   if (tab==='tags') renderTagsTab();
-  if (tab==='settings') { renderLensesList(); renderCustomTagsList(); }
+  if (tab==='report') renderReportHistory();
+  if (tab==='settings') { renderLensesList(); renderCustomTagsList(); renderModePicker(); }
   if (movingTaskId) cancelMove();
   // Show sidebar on planner tab, keep accessible via hamburger on others
   closeSidebar();
@@ -1822,7 +1863,7 @@ async function organiseTasks() {
     const langRule = langInstruction(input);
     const text = await callAI(
       [{role:'user', content:`${langRule}\n\nCurrent time (UTC+8): ${timeStr}. Status: ${phase}.\nList context: "${listName}" — use this to understand what the tasks are about and expand abbreviations accordingly.\n\nNew tasks to add: "${input}"\nExisting tasks: ${list.tasks.map(t=>taskDisplayName(t)).join(', ') || 'none'}\n\nAvailable tags: ${allTags.join(', ')}\n\nPer-task language: Each task must be written in the same language as its original words. Mixed tasks (e.g. "收letter") keep the name exactly as typed and use the dominant language for steps.\n\nSTEPS RULE: Simple tasks get 2 steps. Complex tasks get 3. Use judgement.\n\nReturn ONLY a raw JSON array of NEW tasks. Each: {id(unique string),name(clear descriptive name max 8 words),duration(number mins),steps(array of 2 or 3 short action strings each max 8 words),done(false),tag(one tag from the available list that best fits)}\n\nBe realistic with durations. Don't duplicate existing tasks.`}],
-      `${langRule}\n\nYou are a task organiser. Expand short task names into clear descriptions using list context. Assign the best tag. Simple tasks get 2 steps, complex tasks get 3. Return only valid JSON array, nothing else.`
+      `${langRule}\n\n${modeContext()}\n\nYou are a task organiser. Expand short task names into clear descriptions using list context. Assign the best tag. Simple tasks get 2 steps, complex tasks get 3. Return only valid JSON array, nothing else.`
     );
     pendingTasks = JSON.parse(text.replace(/```json|```/g, '').trim());
 
@@ -2195,12 +2236,78 @@ async function genReport() {
       </div>`;
     });
     document.getElementById('reportCards').innerHTML = cardsHtml || `<div class="report-section"><p style="font-size:0.8rem;color:var(--ink-dim)">${report}</p></div>`;
+
+    // Save to history
+    if (!S.reports) S.reports = [];
+    const statsHtml = `<div class="wk-s"><div class="wv">${avg}%</div><div class="wl">Avg completion</div></div><div class="wk-s"><div class="wv">${totalD}</div><div class="wl">Tasks done</div></div><div class="wk-s"><div class="wv">${week.length}</div><div class="wl">Lists</div></div><div class="wk-s"><div class="wv">${best.completionRate}%</div><div class="wl">Best list</div></div>`;
+    S.reports.unshift({ id: Date.now().toString(), ts: new Date().toISOString(), statsHtml, cardsHtml });
+    save();
+    renderReportHistory();
   } catch(e) {
     alert('Could not generate. Check API key.');
   }
   document.getElementById('repBtn').disabled = false;
   document.getElementById('repSpin').style.display = 'none';
   document.getElementById('repTxt').textContent = 'Regenerate';
+}
+
+function renderReportHistory() {
+  if (!S.reports) S.reports = [];
+  const el = document.getElementById('reportHistory');
+  if (!el) return;
+  if (!S.reports.length) { el.innerHTML = ''; return; }
+  el.innerHTML = S.reports.map((r, i) => {
+    const d = new Date(r.ts);
+    const label = d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) + ' · ' + d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+    return `<div class="saved-report">
+      <div class="saved-report-head" onclick="toggleSavedReport('${r.id}')">
+        <span class="saved-report-title">📈 ${label}</span>
+        <div class="saved-report-actions">
+          <span class="saved-report-toggle" id="tog_${r.id}">▸</span>
+          <button class="saved-report-del" onclick="event.stopPropagation();deleteReport('${r.id}')" title="Delete">✕</button>
+        </div>
+      </div>
+      <div class="saved-report-body" id="body_${r.id}">
+        <div class="saved-report-stats week-stats">${r.statsHtml}</div>
+        ${r.cardsHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSavedReport(id) {
+  const body = document.getElementById(`body_${id}`);
+  const tog = document.getElementById(`tog_${id}`);
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (tog) tog.textContent = open ? '▾' : '▸';
+}
+
+function deleteReport(id) {
+  S.reports = (S.reports || []).filter(r => r.id !== id);
+  save();
+  renderReportHistory();
+}
+
+function setMode(mode) {
+  S.mode = mode;
+  save();
+  renderModePicker();
+  toast(mode === 'adult_me' ? '👤 Mode: Adult (Me)' : mode === 'adult_staff' ? '👔 Mode: Staff' : '👧 Mode: Kid');
+}
+
+function renderModePicker() {
+  ['adult_me','adult_staff','kid'].forEach(m => {
+    const el = document.getElementById(`mode_${m}`);
+    if (el) el.classList.toggle('active', (S.mode||'adult_me') === m);
+  });
+}
+
+function modeContext() {
+  const m = S.mode || 'adult_me';
+  if (m === 'adult_staff') return `IMPORTANT: You are helping a staff member or assistant manage their work tasks. Tasks are written from the staff's perspective — they are the one doing the work, but the work is for their employer or company. Use language like "Check with employer about...", "Follow up on...", "Prepare ... for boss", "Confirm ... with manager". Tasks should feel like a professional to-do list for someone supporting their employer.`;
+  if (m === 'kid') return `IMPORTANT: You are helping a child manage their own tasks. Use very simple, friendly, encouraging language. Short words. First person ("I need to...", "Remember to..."). Keep steps basic and easy to understand. Be warm and supportive in tone.`;
+  return `You are helping an adult manage their own personal tasks. Write in first person, clear and direct.`;
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────
@@ -2352,16 +2459,18 @@ async function shareToWhatsApp(taskId) {
   if (waBtn) { waBtn.textContent = '⏳'; waBtn.disabled = true; }
 
   try {
+    const displayName = taskDisplayName(t);
     const stepsText = t.steps?.length ? `\nSteps involved:\n${t.steps.map(s=>`- ${s}`).join('\n')}` : '';
     const msg = await callAI(
-      [{role:'user', content:`Write a short, friendly WhatsApp message asking someone (a team member or family member) to help with this task:\n\nTask: ${t.name}${stepsText}\n\nTone: casual and warm, first person, like texting a friend or assistant. Keep it under 4 sentences. Don't use formal language. No emojis unless very natural. Just the message text, nothing else.`}],
-      'You write natural, conversational WhatsApp messages. Short, warm, direct. No preamble, just the message itself.'
+      [{role:'user', content:`Write a short WhatsApp message asking for help with this task:\n\nTask: ${displayName}${stepsText}\n\nFormat: Direct and friendly. Start with "Can you help with [task]?" and end with "Please, thank you!" Add one short sentence of context if the steps make it useful. No emojis. Just the message, nothing else.`}],
+      `${modeContext()}\n\nYou write natural, conversational WhatsApp messages. Short, warm, direct. No preamble, just the message itself.`
     );
     const url = `https://wa.me/?text=${encodeURIComponent(msg.trim())}`;
     window.open(url, '_blank');
   } catch(e) {
     // Fallback to plain text if AI fails
-    let text = `Hi! Can you help me with: *${t.name}*`;
+    const displayName = taskDisplayName(t);
+    let text = `Hi! Can you help me with: *${displayName}*`;
     if (t.steps?.length) text += '\n' + t.steps.map(s=>`• ${s}`).join('\n');
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
