@@ -373,7 +373,18 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .tag-pill.none    { background: var(--surface2); color: var(--ink-faint); border-color: var(--border); }
 
 /* TAG DROPDOWN */
-.tag-dropdown { position: relative; display: inline-block; }
+.task-move-btn { background: none; border: 1px solid var(--border2); border-radius: 5px; color: var(--ink-dim); font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.task-move-btn:hover { background: var(--blue); border-color: var(--blue); color: white; }
+.task-move-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+.task-wa-btn { background: none; border: none; font-size: 0.8rem; cursor: pointer; padding: 2px 3px; opacity: 0.4; transition: opacity 0.15s; }
+.task-wa-btn:hover { opacity: 1; }
+.list-item.move-target { background: rgba(122,158,194,0.15); border-color: var(--blue) !important; }
+.list-item.move-target .list-item-name { color: var(--blue); }
+
+/* MOVE TO BANNER */
+.move-banner { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--blue); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(58,51,48,0.18); font-family: 'Nunito', sans-serif; display: flex; align-items: center; gap: 10px; }
+.move-banner-cancel { background: rgba(255,255,255,0.25); border: none; border-radius: 10px; color: white; font-family: 'Nunito', sans-serif; font-size: 0.75rem; font-weight: 700; padding: 3px 9px; cursor: pointer; }
+.move-banner-cancel:hover { background: rgba(255,255,255,0.4); }
 .tag-dropdown-menu { position: absolute; top: 100%; left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 100; min-width: 160px; padding: 6px; display: none; }
 .tag-dropdown-menu.open { display: block; }
 .tag-dropdown-item { padding: 6px 10px; border-radius: 7px; font-size: 0.76rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
@@ -1253,6 +1264,7 @@ function goTab(tab) {
   if (tab==='calendar') renderCalendar();
   if (tab==='tags') renderTagsTab();
   if (tab==='settings') { renderLensesList(); renderCustomTagsList(); }
+  if (movingTaskId) cancelMove();
   // Show sidebar on planner tab, keep accessible via hamburger on others
   closeSidebar();
 }
@@ -1455,6 +1467,9 @@ function taskHTML(t, i, list) {
     ? `<span class="tag-pill ${t.tag.toLowerCase().replace(/\s+/g,'-')||'custom'}" onclick="${!isInactive?`changeTaskTag('${t.id}',event)`:''}" title="${isInactive?t.tag:'Click to change tag'}">${tagEmojis[t.tag]||'🏷️'} ${t.tag}</span>`
     : (!isInactive ? `<span class="tag-pill none" onclick="changeTaskTag('${t.id}',event)" title="Add tag">+ tag</span>` : '');
 
+  const moveBtn = !isInactive ? `<button class="task-move-btn" onclick="startMoveTask('${t.id}')" title="Move to another list">Move to</button>` : '';
+  const waBtn = `<button class="task-wa-btn" onclick="shareToWhatsApp('${t.id}')" title="Share to WhatsApp">💬</button>`;
+
   return `<div class="task-item ${t.done?'done':''}" id="ti_${t.id}" draggable="${!isInactive}" ondragstart="dStart(event,'${t.id}')" ondragover="dOver(event,'${t.id}')" ondrop="dDrop(event,'${t.id}')" ondragleave="dLeave(event)">
     <div class="task-header">
       ${!isInactive?'<span class="drag-handle">⠿</span>':''}
@@ -1463,6 +1478,8 @@ function taskHTML(t, i, list) {
       <div class="task-right" style="display:flex;align-items:center;gap:5px;">
         ${tagPill}
         ${durHtml}
+        ${moveBtn}
+        ${waBtn}
         ${delBtn}
       </div>
     </div>
@@ -2069,7 +2086,116 @@ function clearAll() {
   }
 }
 
-// ─── TAG CHANGE ───────────────────────────────────────────
+// ─── MOVE TO ──────────────────────────────────────────────
+let movingTaskId = null;
+let movingFromListId = null;
+
+function startMoveTask(taskId) {
+  // Cancel if already moving same task
+  if (movingTaskId === taskId) { cancelMove(); return; }
+
+  movingTaskId = taskId;
+  movingFromListId = S.activeListId;
+
+  // Highlight button
+  document.querySelectorAll('.task-move-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`#ti_${taskId} .task-move-btn`);
+  if (btn) btn.classList.add('active');
+
+  // Highlight sidebar list items as targets
+  renderSidebarMovMode();
+
+  // Show banner
+  showMoveBanner();
+}
+
+function renderSidebarMovMode() {
+  // Re-render sidebar with move-target class on other lists
+  const q = (document.getElementById('searchInp')?.value || '').toLowerCase().trim();
+  let lists = S.lists;
+  if (q) lists = lists.filter(l => getAutoName(l).toLowerCase().includes(q) || l.tasks.map(t=>t.name.toLowerCase()).join(' ').includes(q));
+  const active = lists.filter(l=>!l.inactive);
+  const inactive = lists.filter(l=>l.inactive);
+  let html = '';
+  if (active.length) {
+    html += `<div class="sidebar-section-label">Active</div>`;
+    active.forEach(l => { html += listItemMoveHTML(l); });
+  }
+  if (inactive.length) {
+    if (active.length) html += `<div class="sidebar-divider"></div>`;
+    html += `<div class="sidebar-section-label">Inactive</div>`;
+    inactive.forEach(l => { html += listItemMoveHTML(l); });
+  }
+  document.getElementById('sidebarLists').innerHTML = html;
+}
+
+function listItemMoveHTML(l) {
+  const isFrom = l.id === movingFromListId;
+  const isActive = l.id === S.activeListId;
+  const name = getAutoName(l);
+  const canDrop = !isFrom && !l.inactive;
+  return `<div class="list-item ${isActive?'active':''} ${canDrop?'move-target':''}"
+    onclick="${canDrop ? `dropTaskToList('${l.id}')` : `selectList('${l.id}')`}">
+    <div class="list-item-info">
+      <div class="list-item-name">${isFrom ? '📌 '+name : name}</div>
+      <div class="list-item-meta">${l.tasks.length} task${l.tasks.length!==1?'s':''} · ${l.inactive?'Inactive':'Active'}</div>
+    </div>
+    ${canDrop ? '<div style="font-size:0.7rem;color:var(--blue);font-weight:700;flex-shrink:0;">Paste here</div>' : ''}
+  </div>`;
+}
+
+function dropTaskToList(targetListId) {
+  if (!movingTaskId || !movingFromListId) return;
+  const fromList = S.lists.find(l=>l.id===movingFromListId);
+  const toList = S.lists.find(l=>l.id===targetListId);
+  if (!fromList || !toList) return;
+
+  const task = fromList.tasks.find(t=>t.id===movingTaskId);
+  if (!task) return;
+
+  // Move task
+  fromList.tasks = fromList.tasks.filter(t=>t.id!==movingTaskId);
+  toList.tasks.unshift({...task});
+
+  save();
+  cancelMove();
+  renderSidebar();
+  renderCurrentList();
+  toast(`Moved to "${getAutoName(toList)}" ✅`);
+}
+
+function showMoveBanner() {
+  removeBanner();
+  const banner = document.createElement('div');
+  banner.className = 'move-banner';
+  banner.id = 'moveBanner';
+  banner.innerHTML = `Tap a list to move task there <button class="move-banner-cancel" onclick="cancelMove()">Cancel</button>`;
+  document.body.appendChild(banner);
+}
+
+function removeBanner() {
+  document.getElementById('moveBanner')?.remove();
+}
+
+function cancelMove() {
+  movingTaskId = null;
+  movingFromListId = null;
+  removeBanner();
+  renderSidebar();
+  renderTasks();
+}
+
+// ─── WHATSAPP SHARE ───────────────────────────────────────
+function shareToWhatsApp(taskId) {
+  const list = getActiveList(); if (!list) return;
+  const t = list.tasks.find(t=>t.id===taskId); if (!t) return;
+  let text = `*${t.name}*`;
+  if (t.steps?.length) text += '\n' + t.steps.map(s=>`• ${s}`).join('\n');
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
+
 function changeTaskTag(taskId, event) {
   event.stopPropagation();
   const list = getActiveList(); if (!list || list.inactive) return;
