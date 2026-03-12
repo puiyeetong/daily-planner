@@ -501,7 +501,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .cal-list-card-meta { font-size: 0.72rem; color: var(--ink-dim); }
 
 /* MOBILE SIDEBAR TOGGLE */
-.mob-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 0 18px; color: var(--ink); font-size: 2.2rem; min-width: 70px; min-height: 70px; align-items: center; justify-content: center; flex-shrink: 0; margin-left: -18px; }
+.mob-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 0 20px; color: var(--ink); font-size: 2.2rem; min-width: 72px; align-self: stretch; align-items: center; justify-content: center; flex-shrink: 0; margin-left: -18px; }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 90; }
 .sidebar-overlay.on { display: block; }
 
@@ -509,12 +509,13 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 @media (max-width: 680px) {
   body { overflow: hidden; }
 
-  header { padding: 0 14px; padding-top: env(safe-area-inset-top); height: calc(70px + env(safe-area-inset-top)); }
-  .logo { font-size: 1.1rem; }
-  .live-clock { font-size: 1rem; }
-  .live-date { font-size: 0.6rem; }
-  .ai-sw-wrap { gap: 4px; }
-  .ai-sw { padding: 4px 10px; font-size: 0.68rem; }
+  header { 
+    padding: 0 14px 0 0; 
+    padding-top: env(safe-area-inset-top); 
+    height: calc(72px + env(safe-area-inset-top)); 
+    align-items: flex-end;
+    padding-bottom: 8px;
+  }
   .mob-menu-btn { display: flex; align-items: center; justify-content: center; }
 
   /* On mobile, sidebar becomes fixed slide-out overlay */
@@ -662,6 +663,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
   <header>
     <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
     <div class="logo">Daily Planner</div>
+    <div style="flex:1"></div>
     <div class="clock-wrap">
       <div class="live-clock" id="liveClock">--:--:--</div>
       <div class="live-date" id="liveDate">Loading...</div>
