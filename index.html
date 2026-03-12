@@ -136,7 +136,8 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .list-item-name { font-size: 0.78rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
 .list-item.active .list-item-name { color: var(--rose); }
 .list-item-meta { font-size: 0.64rem; color: var(--ink-dim); margin-top: 2px; }
-.list-item-rating { font-size: 0.7rem; flex-shrink: 0; }
+.list-item-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+.list-item-bar { height: 100%; border-radius: 2px; transition: width 0.3s; }
 .list-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
 .list-item:hover .list-actions { opacity: 1; }
 .list-action-btn { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; transition: all 0.15s; }
@@ -710,7 +711,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
     <span class="gp-label" id="gpLabel">0/0</span>
     <div class="gp-bar"><div class="gp-fill" id="gpFill" style="width:0%"></div></div>
     <span class="gp-pct" id="gpPct">0%</span>
-    <span class="gp-emoji" id="gpEmoji"></span>
+    <span class="gp-emoji" id="gpEmoji" style="display:none"></span>
   </div>
 
   <!-- PLANNER -->
@@ -780,7 +781,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 
       <!-- SPARKLINE -->
       <div class="a-card">
-        <div class="a-card-head"><h3>📈 Completion Trend</h3><span class="a-card-sub" id="sparkSub"></span></div>
+        <div class="a-card-head"><h3>⏱ Minutes Trend</h3><span class="a-card-sub" id="sparkSub"></span></div>
         <div class="sparkline-wrap" id="sparklineWrap"></div>
       </div>
 
@@ -794,12 +795,6 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
           <h3>⚡ Efficiency</h3>
           <div class="eff-plain" id="effPlain"></div>
         </div>
-      </div>
-
-      <!-- LIST HISTORY -->
-      <div class="a-card">
-        <h3>📅 Recent Lists</h3>
-        <div class="list-history" id="listHistory"></div>
       </div>
 
       <!-- SKIPPED TASK AI -->
@@ -958,7 +953,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 
 <script>
 // ─── UTC+8 ────────────────────────────────────────────────
-const utc8 = () => { const n=new Date(); return new Date(n.getTime()+n.getTimezoneOffset()*60000+8*3600000); };
+const utc8 = (d) => { const n=d||new Date(); return new Date(n.getTime()+n.getTimezoneOffset()*60000+8*3600000); };
 const fmt = d => d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
 const fmtDate = d => d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 const fmtShort = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',','');
@@ -1335,6 +1330,7 @@ function selectList(id) {
   _lastSelect = now;
   S.activeListId=id;
   save();
+  goTab('planner');
   renderSidebar();
   renderCurrentList();
   closeSidebar();
@@ -1439,18 +1435,23 @@ function renderSidebar() {
 function listItemHTML(l) {
   const isActive=l.id===S.activeListId;
   const name=getAutoName(l);
-  const rating=l.inactive?`<span class="list-item-rating">${l.rating||''}</span>`:'';
+  const rating = '';  // removed rating emoji from sidebar
   const projectBadge=l.isProject?`<span class="list-item-project">PROJECT</span>`:'';
   const archiveBtn=!l.inactive&&!l.isProject?`<button class="list-action-btn archive" onclick="event.stopPropagation();archiveList('${l.id}')" title="Move to Inactive">◽</button>`
     :l.inactive?`<button class="list-action-btn archive" onclick="event.stopPropagation();reactivateList('${l.id}')" title="Reactivate" style="color:var(--green)">↩</button>`:'';
   const d=new Date(l.created);
   const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const total = l.tasks.length;
+  const done = l.tasks.filter(t=>t.done).length;
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  const barColor = 'var(--green)';
+  const barHTML = total > 0 ? `<div class="list-item-bar-wrap"><div class="list-item-bar" style="width:${pct}%;background:${barColor}"></div></div>` : '';
   return `<div class="list-item ${isActive?'active':''}" onclick="selectList('${l.id}')">
     <div class="list-item-info">
       <div class="list-item-name">${name} ${projectBadge}</div>
-      <div class="list-item-meta">${l.tasks.length} task${l.tasks.length!==1?'s':''} · ${l.isProject?'Project':l.inactive?'Inactive':'Active'} · ${dateStr}</div>
+      <div class="list-item-meta">${done}/${total} task${total!==1?'s':''} · ${l.isProject?'Project':l.inactive?'Inactive':'Active'} · ${dateStr}</div>
+      ${barHTML}
     </div>
-    ${rating}
     <div class="list-actions">
       ${archiveBtn}
       <button class="list-action-btn del" onclick="event.stopPropagation();deleteList('${l.id}')" title="Delete">✕</button>
@@ -1503,7 +1504,10 @@ function renderTasks() {
     el.innerHTML='<div class="empty-tasks" id="emptyTasks"><div class="ei">✍️</div><p>Type tasks above and hit <strong>✨ Organise</strong><br>or press Enter</p></div>';
     return;
   }
-  const sorted = [...list.tasks.filter(t=>!t.done), ...list.tasks.filter(t=>t.done)];
+  const sorted = [
+    ...list.tasks.filter(t=>!t.done),
+    ...list.tasks.filter(t=>t.done).sort((a,b) => new Date(b.completedAt||0) - new Date(a.completedAt||0))
+  ];
   el.innerHTML=sorted.map((t,i)=>taskHTML(t,i,list)).join('');
 }
 
@@ -1572,7 +1576,7 @@ function toggleTask(id) {
   const ts=utc8().toISOString();
   if (t.done) { t.completedAt=ts; if (!list.firstTick) list.firstTick=ts; list.lastTick=ts; }
   else { delete t.completedAt; }
-  save(); updateProgress(); checkConfetti();
+  save(); updateProgress(); checkConfetti(); renderSidebar();
   if (t.done) {
     tickStarBurst(id);
     // Update visually immediately — don't wait for renderTasks
@@ -1977,17 +1981,39 @@ function renderAnalytics() {
   document.getElementById('trendLists').textContent = done.length;
 
   // ── SPARKLINE ──
-  const sparkData = done.slice(-12);
-  document.getElementById('sparkSub').textContent = `Last ${sparkData.length} lists`;
-  const maxPct = 100;
-  document.getElementById('sparklineWrap').innerHTML = sparkData.map((l, i) => {
-    const h = Math.max(4, Math.round((l.completionRate / maxPct) * 50));
-    const color = l.completionRate >= 80 ? 'var(--green)' : l.completionRate >= 50 ? 'var(--orange)' : 'var(--red)';
-    const d = new Date(l.created);
-    const dateStr = d.toLocaleDateString('en-GB', {day:'numeric',month:'short'});
-    return `<div class="spark-bar-wrap" title="${getAutoName(l)}: ${l.completionRate}% · ${dateStr}">
-      <div class="spark-bar" style="height:${h}px;background:${color}"></div>
-      <div class="spark-pct">${l.completionRate}%</div>
+  // ── MINUTES TREND (last 30 days) ──
+  const today = utc8();
+  const days = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    days.push({ key, date: d, mins: 0 });
+  }
+  // Fill in minutes from completedAt across ALL lists (active + inactive)
+  S.lists.forEach(l => {
+    l.tasks.forEach(t => {
+      if (t.done && t.completedAt) {
+        const cd = utc8(new Date(t.completedAt));
+        const k = `${cd.getFullYear()}-${cd.getMonth()}-${cd.getDate()}`;
+        const day = days.find(d => d.key === k);
+        if (day) day.mins += (t.duration || 0);
+      }
+    });
+  });
+  const maxMins = Math.max(...days.map(d => d.mins), 1);
+  const totalMins30 = days.reduce((s, d) => s + d.mins, 0);
+  const activeDays = days.filter(d => d.mins > 0).length;
+  const avgMinsPerActiveDay = activeDays ? Math.round(totalMins30 / activeDays) : 0;
+
+  document.getElementById('sparkSub').textContent = `${activeDays} active days · avg ${avgMinsPerActiveDay}m`;
+  document.getElementById('sparklineWrap').innerHTML = days.map(d => {
+    const h = Math.max(d.mins > 0 ? 3 : 0, Math.round((d.mins / maxMins) * 50));
+    const color = d.mins >= 120 ? 'var(--green)' : d.mins >= 60 ? 'var(--orange)' : d.mins > 0 ? 'var(--rose)' : 'var(--border)';
+    const dateStr = d.date.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+    const label = d.mins >= 60 ? `${Math.floor(d.mins/60)}h${d.mins%60?d.mins%60+'m':''}` : d.mins > 0 ? `${d.mins}m` : '';
+    return `<div class="spark-bar-wrap" title="${dateStr}: ${d.mins}m">
+      <div class="spark-bar" style="height:${Math.max(h,2)}px;background:${color};opacity:${d.mins>0?1:0.2}"></div>
+      <div class="spark-pct">${label}</div>
     </div>`;
   }).join('');
 
@@ -2037,23 +2063,7 @@ function renderAnalytics() {
     Task completion rate: <strong>${taskRate}%</strong><br>
     ${streak > 1 ? `🔥 <strong>${streak} lists</strong> in a row at 80%+` : streak === 1 ? '1 list at 80%+ recently' : 'Keep going to build a streak'}`;
 
-  // ── LIST HISTORY ──
-  document.getElementById('listHistory').innerHTML = done.slice(-10).reverse().map(l => {
-    const d = new Date(l.created);
-    const dateStr = d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
-    const taskCount = l.tasks.length;
-    const doneCount = l.tasks.filter(t=>t.done).length;
-    const color = l.completionRate >= 80 ? 'var(--green)' : l.completionRate >= 50 ? 'var(--orange)' : '#e07070';
-    return `<div class="hist-row" onclick="openCalList('${l.id}')">
-      <div class="hist-info">
-        <div class="hist-name">${getAutoName(l)}</div>
-        <div class="hist-meta">${dateStr} · ${doneCount}/${taskCount} tasks</div>
-      </div>
-      <div class="hist-bar-wrap"><div class="hist-bar" style="width:${l.completionRate}%;background:${color}"></div></div>
-      <span class="hist-pct">${l.completionRate}%</span>
-      <span class="hist-rating">${l.rating}</span>
-    </div>`;
-  }).join('');
+
 }
 
 function renderBullets(text, elId) {
@@ -2798,7 +2808,7 @@ function showCalLists(y, m, d) {
     const pct = total ? Math.round((done/total)*100) : 0;
     html += `<div class="cal-list-card" ontouchend="event.preventDefault();openCalList('${l.id}')" onclick="openCalList('${l.id}')">
       <div class="cal-list-card-name">${getAutoName(l)}</div>
-      <div class="cal-list-card-meta">${total} tasks · ${done} done · ${pct}% ${l.inactive?'· Inactive':''} ${l.rating||''}</div>
+      <div class="cal-list-card-meta">${total} tasks · ${done} done · ${pct}% ${l.inactive?'· Inactive':''}</div>
     </div>`;
   });
   area.innerHTML = html;
