@@ -35,7 +35,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 button, .task-chk, .list-item, .nav-tab, .check-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--ink); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--ink); height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
 
 /* ── SETUP ── */
 #setupScreen {
@@ -101,7 +101,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .nav-tab.on { color: var(--rose); border-bottom-color: var(--rose); }
 
 /* ── APP SHELL ── */
-#app { display: flex; flex-direction: row; height: 100vh; }
+#app { display: flex; flex-direction: row; height: 100vh; height: 100dvh; }
 #content { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
 .tab { display: none; flex: 1; min-height: 0; overflow: hidden; }
 .tab.on { display: flex; }
@@ -249,11 +249,11 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .bubble.user { align-self: flex-end; background: var(--rose); color: #fff; border-bottom-right-radius: 4px; font-weight: 600; }
 .bubble.ai { align-self: flex-start; background: var(--surface2); color: var(--ink); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .bubble.thinking { color: var(--ink-dim); font-style: italic; }
-.chat-foot { padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 8px; flex-shrink: 0; }
-.chat-inp { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; font-family: 'Nunito', sans-serif; font-size: 0.83rem; color: var(--ink); outline: none; transition: border-color 0.2s; }
+.chat-foot { padding: 12px 22px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 8px; flex-shrink: 0; }
+.chat-inp { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; font-family: 'Nunito', sans-serif; font-size: 1rem; color: var(--ink); outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
 .chat-inp:focus { border-color: var(--rose); }
 .chat-inp::placeholder { color: var(--ink-faint); }
-.chat-send { padding: 10px 16px; background: var(--rose); color: #fff; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+.chat-send { padding: 10px 16px; background: var(--rose); color: #fff; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.2s; flex-shrink: 0; min-width: 48px; min-height: 48px; }
 .chat-send:hover { background: #B5726A; }
 .chat-send:disabled { background: var(--ink-faint); cursor: not-allowed; }
 
