@@ -736,7 +736,8 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
     <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
     <div class="logo">Daily Planner</div>
     <div style="flex:1"></div>
-    <button onclick="undo()" title="Undo" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px;color:var(--ink-dim);flex-shrink:0;" >↩</button>
+    <button onclick="undo()" title="Undo" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px;color:var(--ink-dim);flex-shrink:0;">↩</button>
+    <button id="saveItBtn" onclick="saveIt()" style="background:none;border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:0.72rem;font-weight:700;padding:4px 10px;color:var(--ink-dim);flex-shrink:0;font-family:'Nunito',sans-serif;transition:all 0.2s;">Save it</button>
     <div class="clock-wrap">
       <div class="live-clock" id="liveClock">--:--:--</div>
       <div class="live-date" id="liveDate">Loading...</div>
@@ -1096,10 +1097,23 @@ function init() {
 
 let undoStack = [];
 function save() {
+  S.lastSaved = Date.now();
   undoStack.push(JSON.stringify(S));
   if (undoStack.length > 20) undoStack.shift();
   localStorage.setItem('planner_v4', JSON.stringify(S));
   syncToCloud();
+}
+
+async function saveIt() {
+  const btn = document.getElementById('saveItBtn');
+  btn.textContent = 'Saving...'; btn.style.color = 'var(--ink-dim)';
+  try {
+    await syncToCloud();
+    btn.textContent = 'Saved ✓'; btn.style.color = 'var(--green)';
+  } catch(e) {
+    btn.textContent = 'Failed ✕'; btn.style.color = 'var(--red)';
+  }
+  setTimeout(() => { btn.textContent = 'Save it'; btn.style.color = 'var(--ink-dim)'; }, 2000);
 }
 
 function undo() {
@@ -1172,7 +1186,7 @@ async function syncToCloud() {
 }
 
 async function syncFromCloud() {
-  if (location.protocol === 'file:') return; // never sync when opened as local file
+  if (location.protocol === 'file:') return;
   if (!S.supabase?.url || !S.supabase?.key) return;
   try {
     const userKey = sbUserKey();
@@ -1182,10 +1196,13 @@ async function syncFromCloud() {
     const rows = await r.json();
     if (rows?.length && rows[0].data) {
       const cloudData = JSON.parse(rows[0].data);
-      // Always use cloud data when syncing from cloud
-      const supabaseCreds = S.supabase; // preserve current device's supabase creds
+      // Only overwrite local if cloud data is newer
+      const cloudTs = cloudData.lastSaved || 0;
+      const localTs = S.lastSaved || 0;
+      if (cloudTs <= localTs) { toast('☁️ Already up to date'); return; }
+      const supabaseCreds = S.supabase;
       Object.assign(S, cloudData);
-      S.supabase = supabaseCreds; // keep this device's creds
+      S.supabase = supabaseCreds;
       localStorage.setItem('planner_v4', JSON.stringify(S));
       renderSidebar();
       renderCurrentList();
