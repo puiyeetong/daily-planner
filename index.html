@@ -555,6 +555,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 
 /* MOBILE SIDEBAR TOGGLE */
 .mob-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 0 20px; color: var(--ink); font-size: 2.2rem; min-width: 72px; align-self: stretch; align-items: center; justify-content: center; flex-shrink: 0; margin-left: -18px; }
+.save-it-btn { display: inline-block; }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 90; }
 .sidebar-overlay.on { display: block; }
 /* On desktop, move-mode overlay only covers main area, not sidebar */
@@ -574,6 +575,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
     padding-bottom: 10px;
   }
   .mob-menu-btn { display: flex; align-items: center; justify-content: center; padding-bottom: 2px; }
+  .save-it-btn { display: inline-block; font-size: 0.62rem !important; padding: 3px 7px !important; }
   .logo { font-size: 1.95rem; }
   .live-clock { font-size: 0.95rem; }
   .live-date { font-size: 0.6rem; }
@@ -737,7 +739,7 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
     <div class="logo">Daily Planner</div>
     <div style="flex:1"></div>
     <button onclick="undo()" title="Undo" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px;color:var(--ink-dim);flex-shrink:0;">↩</button>
-    <button id="saveItBtn" onclick="saveIt()" style="background:none;border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:0.72rem;font-weight:700;padding:4px 10px;color:var(--ink-dim);flex-shrink:0;font-family:'Nunito',sans-serif;transition:all 0.2s;">Save it</button>
+    <button id="saveItBtn" onclick="saveIt()" style="background:none;border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:0.72rem;font-weight:700;padding:4px 10px;color:var(--ink-dim);flex-shrink:0;font-family:'Nunito',sans-serif;transition:all 0.2s;" class="save-it-btn">Save it</button>
     <div class="clock-wrap">
       <div class="live-clock" id="liveClock">--:--:--</div>
       <div class="live-date" id="liveDate">Loading...</div>
@@ -1102,6 +1104,11 @@ function save() {
   if (undoStack.length > 20) undoStack.shift();
   localStorage.setItem('planner_v4', JSON.stringify(S));
   syncToCloud();
+  // Reset save button to show unsaved state
+  const btn = document.getElementById('saveItBtn');
+  if (btn && btn.dataset.saved === '1') {
+    btn.textContent = 'Save it'; btn.style.color = 'var(--ink-dim)'; btn.dataset.saved = '0';
+  }
 }
 
 async function saveIt() {
@@ -1110,10 +1117,11 @@ async function saveIt() {
   try {
     await syncToCloud();
     btn.textContent = 'Saved ✓'; btn.style.color = 'var(--green)';
+    btn.dataset.saved = '1';
   } catch(e) {
     btn.textContent = 'Failed ✕'; btn.style.color = 'var(--red)';
+    setTimeout(() => { btn.textContent = 'Save it'; btn.style.color = 'var(--ink-dim)'; }, 2000);
   }
-  setTimeout(() => { btn.textContent = 'Save it'; btn.style.color = 'var(--ink-dim)'; }, 2000);
 }
 
 function undo() {
@@ -2220,7 +2228,27 @@ function getActiveLens() {
 function lensContext() {
   const lens = getActiveLens();
   if (!lens) return null;
-  return `This person defines productive as follows — use this as your lens for ALL analysis:\n"${lens.definition}"\n\nTag meanings: Work=business/client tasks, Admin=paperwork/bills/orders, Wellness=self-care/health, Kids=child-related, Home=household. Custom tags: ${(S.customTags||[]).map(t=>`${t.name}=${t.desc}`).join('; ')||'none'}.`;
+  return `This person defines productive as follows — use this as your lens for ALL analysis:\n"${lens.definition}"\n\nTag meanings: Work=business/client tasks, Admin=paperwork/bills/orders, Wellness=self-care/health, Kids=child-related, Home=household. Custom tags: ${(S.customTags||[]).map(t=>`${t.name}=${t.desc}`).join('; ')||'none'}.\n\nIMPORTANT CONTEXT: Lists are NOT necessarily daily lists. The user creates lists for future dates, projects, and ongoing work. DO NOT assume a list = one day. Base ALL behaviour analysis on completed tasks (those with a completion timestamp) — these reflect what the user actually did and when. Uncompleted tasks may be planned for the future, not necessarily skipped.`;
+}
+
+// Helper: get all completed tasks across all lists with metadata
+function getCompletedTasks() {
+  const tasks = [];
+  S.lists.forEach(l => {
+    l.tasks.forEach(t => {
+      if (t.done && t.completedAt) {
+        tasks.push({
+          name: taskDisplayName(t),
+          tag: t.tag || 'none',
+          duration: t.duration || 0,
+          completedAt: t.completedAt,
+          completedDate: utc8(new Date(t.completedAt)).toLocaleDateString('en-GB', {day:'numeric',month:'short'}),
+          listName: getAutoName(l)
+        });
+      }
+    });
+  });
+  return tasks.sort((a,b) => new Date(b.completedAt) - new Date(a.completedAt));
 }
 
 function renderAnalytics() {
@@ -2364,8 +2392,6 @@ function renderBullets(text, elId) {
 }
 
 async function genSkipCoach() {
-  const done = S.lists.filter(l => l.inactive).slice(-30);
-  if (!done.length) { alert('Archive some lists first!'); return; }
   const lens = getActiveLens();
   if (!lens) {
     document.getElementById('skipCoachOutput').innerHTML = '<div class="no-lens-notice"><strong>No active lens</strong>Set a lens in Settings → My Lenses to unlock AI coaching personalised to your definition of productive.</div>';
@@ -2374,20 +2400,24 @@ async function genSkipCoach() {
   document.getElementById('skipSpin').style.display = 'inline-block';
   document.getElementById('skipTxt').textContent = '...';
 
-  const skipped = [];
-  done.forEach(l => l.tasks.filter(t => !t.done && !(t.isManual && S.manualPrivate)).forEach(t => skipped.push(`${t.name} [tag:${t.tag||'none'}] (${t.duration}m)`)));
-
-  if (!skipped.length) {
-    document.getElementById('skipCoachOutput').innerHTML = '🎉 You\'ve completed everything. Nothing to skip!';
+  const completed = getCompletedTasks().slice(0, 60);
+  if (!completed.length) {
+    document.getElementById('skipCoachOutput').innerHTML = 'No completed tasks yet. Tick off some tasks first!';
     document.getElementById('skipSpin').style.display = 'none';
     document.getElementById('skipTxt').textContent = 'Analyse';
     return;
   }
 
+  // Also get uncompleted tasks from inactive lists as genuinely skipped
+  const skipped = [];
+  S.lists.filter(l=>l.inactive).forEach(l => l.tasks.filter(t=>!t.done && !(t.isManual && S.manualPrivate)).forEach(t => skipped.push(`${taskDisplayName(t)} [${t.tag||'none'}] (${t.duration}m)`)));
+
+  const completedStr = completed.map(t=>`${t.completedDate}: ${t.name} [${t.tag}] (${t.duration}m)`).join('\n');
+
   try {
     const coach = await callAI(
-      [{role:'user', content:`My incomplete tasks across ${done.length} lists (with tag and time estimates):\n${skipped.join(', ')}\n\nIdentify 3-4 specific patterns. For each: name the pattern, what it reveals about my work habits, and one concrete fix. Format as a numbered list, one pattern per line. Be direct, specific to MY tasks, not generic.`}],
-      lensContext() + '\n\nYou are a sharp productivity coach. Give specific, actionable bullet points. No intros or conclusions. Just 3-4 numbered insights. Each under 25 words.'
+      [{role:'user', content:`My recently completed tasks (actual behaviour, with date and time):\n${completedStr}\n\n${skipped.length ? `Tasks left undone in archived lists (genuinely skipped):\n${skipped.slice(0,30).join(', ')}` : ''}\n\nBased on what I actually completed, identify 3-4 patterns in my real behaviour — what I tend to do, what time, which tags, what I avoid. Each pattern: name it, what it reveals, one concrete fix. Numbered list, direct and specific.`}],
+      lensContext() + '\n\nYou are a sharp productivity coach. Analyse actual completed task behaviour, not list structure. Give specific, actionable insights. No intros or conclusions. Just 3-4 numbered insights.'
     );
     renderBullets(coach, 'skipCoachOutput');
   } catch(e) {
@@ -2398,8 +2428,6 @@ async function genSkipCoach() {
 }
 
 async function genInsight() {
-  const done = S.lists.filter(l=>l.inactive).slice(-30);
-  if (!done.length) { alert('Archive some lists first!'); return; }
   const lens = getActiveLens();
   if (!lens) {
     document.getElementById('insightOutput').innerHTML = '<div class="no-lens-notice"><strong>No active lens</strong>Set a lens in Settings → My Lenses to unlock AI coaching personalised to your definition of productive.</div>';
@@ -2408,15 +2436,24 @@ async function genInsight() {
   document.getElementById('insSpin').style.display='inline-block';
   document.getElementById('insTxt').textContent='...';
 
-  const avgAll = Math.round(done.reduce((s,l)=>s+l.completionRate,0)/done.length);
-  const recent5avg = Math.round(done.slice(-5).reduce((s,l)=>s+l.completionRate,0)/Math.min(5,done.length));
-  const highDays = done.filter(l=>l.completionRate>=80).length;
-  const data = done.slice(-10).map(l=>`${getAutoName(l)}: ${l.completionRate}% — Done: ${l.tasks.filter(t=>t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}. Skipped: ${l.tasks.filter(t=>!t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}`).join('\n');
+  const completed = getCompletedTasks().slice(0, 60);
+  if (!completed.length) {
+    document.getElementById('insightOutput').textContent = 'No completed tasks yet. Tick off some tasks first!';
+    document.getElementById('insSpin').style.display='none';
+    document.getElementById('insTxt').textContent='Refresh';
+    return;
+  }
+
+  const totalMins = completed.reduce((s,t)=>s+t.duration,0);
+  const tagCounts = {};
+  completed.forEach(t=>{ tagCounts[t.tag]=(tagCounts[t.tag]||0)+1; });
+  const topTag = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'none';
+  const completedStr = completed.slice(0,40).map(t=>`${t.completedDate}: ${t.name} [${t.tag}] (${t.duration}m)`).join('\n');
 
   try {
     const insight = await callAI(
-      [{role:'user', content:`My stats: ${done.length} lists total, ${avgAll}% avg completion, ${recent5avg}% recent avg, ${highDays} lists at 80%+.\n\nMy last 10 lists (task names include their tag in brackets):\n${data}\n\nGive me 4 specific coaching points as a numbered list:\n1. What I'm genuinely good at (be specific, reference my productivity definition)\n2. My biggest efficiency leak right now\n3. A pattern in what I skip (name the theme, relate to my definition of productive)\n4. One concrete thing to do differently next week\n\nUse my actual task names. Each point max 20 words. No filler.`}],
-      lensContext() + '\n\nYou are a direct productivity coach. 4 numbered bullet points only. Specific to this person\'s data and their definition of productive. No intro, no conclusion, no generic advice.'
+      [{role:'user', content:`My ${completed.length} most recent completed tasks (${totalMins}m total, most common tag: ${topTag}):\n\n${completedStr}\n\nGive me 4 specific coaching points:\n1. What I'm genuinely good at (based on what I actually complete)\n2. My biggest efficiency pattern or leak\n3. A tag or type of task I consistently do or avoid\n4. One concrete thing to do differently\n\nUse my actual task names and dates. Each point max 20 words. No filler.`}],
+      lensContext() + '\n\nYou are a direct productivity coach. Base insights on actual completed task data, not list structure. 4 numbered bullet points only. Specific to this person\'s real behaviour. No intro, no conclusion.'
     );
     renderBullets(insight, 'insightOutput');
   } catch(e) {
@@ -2428,8 +2465,6 @@ async function genInsight() {
 
 // ─── WEEKLY REPORT ────────────────────────────────────────
 async function genReport() {
-  const done = S.lists.filter(l=>l.inactive);
-  if (!done.length) { alert('Archive some lists first!'); return; }
   const lens = getActiveLens();
   if (!lens) {
     document.getElementById('reportEmpty').style.display = 'block';
@@ -2441,26 +2476,35 @@ async function genReport() {
   document.getElementById('repSpin').style.display = 'inline-block';
   document.getElementById('repTxt').textContent = '...';
 
-  const week = done.slice(-7);
-  const avg = Math.round(week.reduce((s,l)=>s+l.completionRate,0)/week.length);
-  const totalD = week.reduce((s,l)=>s+l.tasks.filter(t=>t.done).length,0);
-  const totalT = week.reduce((s,l)=>s+l.tasks.length,0);
-  const best = week.reduce((b,l)=>l.completionRate>b.completionRate?l:b,week[0]);
-  const data = week.map(l=>`${getAutoName(l)}: ${l.completionRate}%. Done: ${l.tasks.filter(t=>t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}. Skipped: ${l.tasks.filter(t=>!t.done).map(t=>`${taskDisplayName(t)}[${t.tag||'none'}]`).join(', ')||'none'}`).join('\n');
+  const completed = getCompletedTasks().slice(0, 60);
+  if (!completed.length) {
+    document.getElementById('reportEmpty').style.display = 'block';
+    document.getElementById('reportEmpty').innerHTML = '<div class="ei">📋</div><p>No completed tasks yet. Tick off some tasks to generate a report.</p>';
+    document.getElementById('repBtn').disabled = false;
+    document.getElementById('repSpin').style.display = 'none';
+    document.getElementById('repTxt').textContent = 'Generate';
+    return;
+  }
+
+  const totalMins = completed.reduce((s,t)=>s+t.duration,0);
+  const tagCounts = {};
+  completed.forEach(t=>{ tagCounts[t.tag]=(tagCounts[t.tag]||0)+1; });
+  const tagSummary = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}:${v}`).join(', ');
+  const completedStr = completed.slice(0,40).map(t=>`${t.completedDate}: ${t.name} [${t.tag}] (${t.duration}m)`).join('\n');
 
   try {
     const report = await callAI(
-      [{role:'user', content:`My last ${week.length} lists (${avg}% avg, ${totalD}/${totalT} tasks done, best: ${getAutoName(best)} at ${best.completionRate}%):\n\n${data}\n\nWrite a report in exactly 4 sections. Each section: a label line then 3 bullet points. Format:\n\nOVERVIEW\n- point\n- point\n- point\n\nWHAT WENT WELL\n- point\n- point\n- point\n\nPATTERNS TO FIX\n- point\n- point\n- point\n\nNEXT WEEK\n- point\n- point\n- point\n\nUse my actual task names, tags, and real numbers. Judge productivity through my definition. Each bullet max 20 words. Be specific not generic.`}],
-      lensContext() + '\n\nYou are a direct productivity coach. Output exactly 4 labelled sections each with 3 bullet points. No intro, no conclusion, no filler.'
+      [{role:'user', content:`My ${completed.length} most recently completed tasks (${totalMins}m total, tags: ${tagSummary}):\n\n${completedStr}\n\nWrite a report in exactly 4 sections based on my ACTUAL completed behaviour. Each section: a label line then 3 bullet points.\n\nOVERVIEW\n- point\n- point\n- point\n\nWHAT WENT WELL\n- point\n- point\n- point\n\nPATTERNS TO FIX\n- point\n- point\n- point\n\nNEXT WEEK\n- point\n- point\n- point\n\nBase insights on what I actually completed and when, not on list structure. Use my real task names. Each bullet max 20 words.`}],
+      lensContext() + '\n\nYou are a direct productivity coach. Base the report on actual completed task behaviour with timestamps. Output exactly 4 labelled sections each with 3 bullet points. No intro, no conclusion, no filler.'
     );
 
     document.getElementById('reportEmpty').style.display = 'none';
     document.getElementById('reportContent').style.display = 'flex';
     document.getElementById('weekStats').innerHTML = `
-      <div class="wk-s"><div class="wv">${avg}%</div><div class="wl">Avg completion</div></div>
-      <div class="wk-s"><div class="wv">${totalD}</div><div class="wl">Tasks done</div></div>
-      <div class="wk-s"><div class="wv">${week.length}</div><div class="wl">Lists</div></div>
-      <div class="wk-s"><div class="wv">${best.completionRate}%</div><div class="wl">Best list</div></div>
+      <div class="wk-s"><div class="wv">${completed.length}</div><div class="wl">Tasks done</div></div>
+      <div class="wk-s"><div class="wv">${totalMins>=60?Math.floor(totalMins/60)+'h'+(totalMins%60?totalMins%60+'m':''):totalMins+'m'}</div><div class="wl">Time logged</div></div>
+      <div class="wk-s"><div class="wv">${Object.keys(tagCounts).length}</div><div class="wl">Tag types</div></div>
+      <div class="wk-s"><div class="wv">${Object.entries(tagCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-'}</div><div class="wl">Top tag</div></div>
     `;
 
     // Parse sections
