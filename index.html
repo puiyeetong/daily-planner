@@ -1842,13 +1842,14 @@ function deleteStep(taskId, si) {
   const list = getActiveList(); if (!list) return;
   const t = list.tasks.find(t=>t.id===taskId); if (!t) return;
   t.steps.splice(si, 1);
-  // clean up stepDone keys
+  // Reindex stepDone keys - use lastIndexOf to correctly parse taskId_stepIndex
   const newStepDone = {};
   Object.keys(list.stepDone).forEach(k => {
     if (!k.startsWith(taskId+'_')) { newStepDone[k] = list.stepDone[k]; return; }
-    const idx = parseInt(k.split('_')[1]);
+    const idx = parseInt(k.slice(taskId.length + 1));
     if (idx < si) newStepDone[k] = list.stepDone[k];
     else if (idx > si) newStepDone[`${taskId}_${idx-1}`] = list.stepDone[k];
+    // idx === si is deleted, skip it
   });
   list.stepDone = newStepDone;
   save(); renderTasks();
