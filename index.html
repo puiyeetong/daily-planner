@@ -432,6 +432,13 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .task-wa-btn { background: none; border: none; font-size: 0.8rem; cursor: pointer; padding: 2px 3px; opacity: 0.4; transition: opacity 0.15s; }
 .task-wa-btn:hover { opacity: 1; }
 .task-completed-at { font-size: 0.62rem; color: var(--green); font-weight: 600; opacity: 0.8; white-space: nowrap; }
+.task-scheduled-badge { font-size: 0.6rem; color: var(--blue); background: rgba(122,158,194,0.12); border: 1px solid rgba(122,158,194,0.3); border-radius: 6px; padding: 2px 6px; white-space: nowrap; cursor: pointer; }
+.task-scheduled-badge:hover { background: rgba(122,158,194,0.22); }
+.task-sched-btn { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.78rem; padding: 2px 3px; transition: all 0.15s; }
+.task-sched-btn:hover { color: var(--blue); }
+.cal-section-label { font-size: 0.68rem; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.5px; margin: 10px 0 4px; }
+.cal-day.has-scheduled .cal-sched-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); margin-top: 2px; }
+.cal-day.selected .cal-sched-dot { background: white; }
 .list-item.move-target { background: none; border-color: var(--border) !important; }
 .list-item.move-target .list-item-name { color: var(--ink); }
 .move-here-btn { background: none; border: none; color: var(--blue); font-size: 1.1rem; font-weight: 700; padding: 3px 6px; cursor: pointer; flex-shrink: 0; }
@@ -1694,6 +1701,12 @@ function taskHTML(t, i, list) {
   const dupBtn = !isInactive ? `<button class="task-dup-btn" onclick="duplicateTask('${t.id}')" title="Duplicate">⧉</button>` : '';
   const waBtn = `<button class="task-wa-btn" onclick="shareToWhatsApp('${t.id}')" title="Share as message">💬</button>`;
   const waListBtn = !t.steps?.length ? '' : `<button class="task-wa-btn" onclick="shareTaskList('${t.id}')" title="Share as list">📋</button>`;
+
+  // Schedule date
+  const schedBtn = !isInactive ? `<button class="task-sched-btn" onclick="openSchedPicker('${t.id}')" title="Schedule for a date">📅</button>` : '';
+  const schedBadge = t.scheduledDate
+    ? `<span class="task-scheduled-badge" onclick="${!isInactive?`openSchedPicker('${t.id}')`:''}" title="Scheduled">📅 ${fmtSchedDate(t.scheduledDate)}</span>`
+    : '';
   const completedAtHtml = t.done && t.completedAt
     ? `<span class="task-completed-at">✓ ${utc8(new Date(t.completedAt)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`
     : '';
@@ -1712,9 +1725,11 @@ function taskHTML(t, i, list) {
           ${tagPill}
           ${durHtml}
           ${completedAtHtml}
+          ${schedBadge}
           ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private">🔒</span>' : ''}
           ${waBtn}
           ${waListBtn}
+          ${schedBtn}
           ${moveBtn}
           ${dupBtn}
           ${delBtn}
@@ -1814,6 +1829,76 @@ function duplicateTask(id) {
   toast('Task duplicated');
 }
 
+function fmtSchedDate(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const dateStr = `${d.getDate()} ${months[d.getMonth()]}`;
+  const sameYear = d.getFullYear() === now.getFullYear();
+  return sameYear ? `${dateStr} ${timeStr}` : `${dateStr} ${d.getFullYear()} ${timeStr}`;
+}
+
+function openSchedPicker(taskId) {
+  // Remove any existing picker
+  const existing = document.getElementById('schedPickerOverlay');
+  if (existing) { existing.remove(); return; }
+
+  const allLists = S.lists;
+  let t = null;
+  for (const l of allLists) { t = l.tasks.find(x=>x.id===taskId); if (t) break; }
+  if (!t) return;
+
+  // Build datetime-local value from existing or now+1day
+  const defaultDt = t.scheduledDate
+    ? new Date(t.scheduledDate)
+    : (() => { const d = new Date(); d.setDate(d.getDate()+1); d.setHours(9,0,0,0); return d; })();
+
+  const pad = n => String(n).padStart(2,'0');
+  const dtVal = `${defaultDt.getFullYear()}-${pad(defaultDt.getMonth()+1)}-${pad(defaultDt.getDate())}T${pad(defaultDt.getHours())}:${pad(defaultDt.getMinutes())}`;
+
+  const ov = document.createElement('div');
+  ov.id = 'schedPickerOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:300;display:flex;align-items:center;justify-content:center;';
+  ov.innerHTML = `
+    <div style="background:var(--surface);border-radius:16px;padding:24px;width:300px;max-width:90vw;box-shadow:var(--shadow-md);">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--ink);margin-bottom:12px;">📅 Schedule task</div>
+      <div style="font-size:0.75rem;color:var(--ink-dim);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+      <input type="datetime-local" id="schedDtInput" value="${dtVal}"
+        style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:Nunito,sans-serif;font-size:0.82rem;color:var(--ink);background:var(--surface2);margin-bottom:14px;">
+      <div style="display:flex;gap:8px;">
+        <button onclick="setSchedDate('${taskId}')" style="flex:1;background:var(--blue);color:white;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:0.8rem;cursor:pointer;font-family:Nunito,sans-serif;">Set date</button>
+        ${t.scheduledDate ? `<button onclick="clearSchedDate('${taskId}')" style="flex:1;background:var(--surface2);color:var(--red);border:1px solid var(--border2);border-radius:8px;padding:8px;font-weight:700;font-size:0.8rem;cursor:pointer;font-family:Nunito,sans-serif;">Remove</button>` : ''}
+        <button onclick="document.getElementById('schedPickerOverlay').remove()" style="flex:1;background:var(--surface2);color:var(--ink-dim);border:1px solid var(--border2);border-radius:8px;padding:8px;font-weight:700;font-size:0.8rem;cursor:pointer;font-family:Nunito,sans-serif;">Cancel</button>
+      </div>
+    </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+}
+
+function setSchedDate(taskId) {
+  const inp = document.getElementById('schedDtInput'); if (!inp) return;
+  const val = inp.value; if (!val) return;
+  const iso = new Date(val).toISOString();
+  for (const l of S.lists) {
+    const t = l.tasks.find(x=>x.id===taskId);
+    if (t) { t.scheduledDate = iso; break; }
+  }
+  document.getElementById('schedPickerOverlay')?.remove();
+  save(); renderTasks();
+  toast('Scheduled ✅');
+}
+
+function clearSchedDate(taskId) {
+  for (const l of S.lists) {
+    const t = l.tasks.find(x=>x.id===taskId);
+    if (t) { delete t.scheduledDate; break; }
+  }
+  document.getElementById('schedPickerOverlay')?.remove();
+  save(); renderTasks();
+  toast('Schedule removed');
+}
+
 function deleteTask(id) {
   const list=getActiveList(); if (!list) return;
   list.tasks=list.tasks.filter(t=>t.id!==id);
@@ -1824,7 +1909,7 @@ function addManualTask() {
   const list = getActiveList(); if (!list || list.inactive) return;
   const inp = document.getElementById('manualInp');
   const name = inp.value.trim(); if (!name) return;
-  const task = { id: 'task_'+Date.now(), name, duration: 0, steps: [], done: false, isManual: true };
+  const task = { id: 'task_'+Date.now(), name, duration: 0, steps: [], done: false, isManual: true, createdAt: Date.now() };
   list.tasks.unshift(task);
   inp.value = '';
   save(); renderTasks(); updateProgress(); renderSidebar();
@@ -3156,9 +3241,10 @@ function renderCalendar() {
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('calMonthLabel').textContent = `${monthNames[calMonth]} ${calYear}`;
 
-  // Build map of date → lists AND minutes done
+  // Build map of date → lists AND minutes done AND scheduled tasks
   const dateMap = {};
   const dateMins = {};
+  const schedMap = {}; // date key → tasks scheduled for that day
   S.lists.forEach(l => {
     const d = new Date(l.created);
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -3170,6 +3256,13 @@ function renderCalendar() {
         const cd = utc8(new Date(t.completedAt));
         const ck = `${cd.getFullYear()}-${cd.getMonth()}-${cd.getDate()}`;
         dateMins[ck] = (dateMins[ck] || 0) + (t.duration || 0);
+      }
+      // Track scheduled tasks
+      if (t.scheduledDate) {
+        const sd = new Date(t.scheduledDate);
+        const sk = `${sd.getFullYear()}-${sd.getMonth()}-${sd.getDate()}`;
+        if (!schedMap[sk]) schedMap[sk] = [];
+        schedMap[sk].push({...t, _listId: l.id, _listName: getAutoName(l)});
       }
     });
   });
@@ -3191,13 +3284,17 @@ function renderCalendar() {
   for(let d=1; d<=daysInMonth; d++) {
     const key = `${calYear}-${calMonth}-${d}`;
     const hasList = !!dateMap[key];
+    const hasSched = !!schedMap[key];
     const isToday = now.getFullYear()===calYear && now.getMonth()===calMonth && now.getDate()===d;
     const isSelected = calSelectedDate && calSelectedDate.y===calYear && calSelectedDate.m===calMonth && calSelectedDate.d===d;
     const minsToday = dateMins[key] || 0;
     const minsLabel = minsToday > 0 ? `<div class="cal-mins">${minsToday>=60?Math.floor(minsToday/60)+'h'+(minsToday%60?' '+minsToday%60+'m':''):minsToday+'m'}</div>` : '';
-    html += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${hasList?'has-list':''}" ontouchend="event.preventDefault();selectCalDay(${calYear},${calMonth},${d})" onclick="selectCalDay(${calYear},${calMonth},${d})">
+    html += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${hasList?'has-list':''} ${hasSched?'has-scheduled':''}" ontouchend="event.preventDefault();selectCalDay(${calYear},${calMonth},${d})" onclick="selectCalDay(${calYear},${calMonth},${d})">
       <div class="cal-day-num">${d}</div>
-      ${hasList?'<div class="cal-dot"></div>':''}
+      <div style="display:flex;gap:2px;margin-top:2px;">
+        ${hasList?'<div class="cal-dot"></div>':''}
+        ${hasSched?'<div class="cal-sched-dot"></div>':''}
+      </div>
       ${minsLabel}
     </div>`;
   }
@@ -3205,7 +3302,7 @@ function renderCalendar() {
   document.getElementById('calGrid').innerHTML = html;
 
   // Show selected date lists
-  if(calSelectedDate) showCalLists(calSelectedDate.y, calSelectedDate.m, calSelectedDate.d);
+  if(calSelectedDate) showCalLists(calSelectedDate.y, calSelectedDate.m, calSelectedDate.d, schedMap);
 }
 
 function selectCalDay(y, m, d) {
@@ -3213,7 +3310,7 @@ function selectCalDay(y, m, d) {
   renderCalendar();
 }
 
-function showCalLists(y, m, d) {
+function showCalLists(y, m, d, schedMap) {
   const dateMap = {};
   S.lists.forEach(l => {
     const dt = new Date(l.created);
@@ -3221,24 +3318,61 @@ function showCalLists(y, m, d) {
     if (!dateMap[key]) dateMap[key] = [];
     dateMap[key].push(l);
   });
+
+  // Build schedMap if not passed in
+  if (!schedMap) {
+    schedMap = {};
+    S.lists.forEach(l => {
+      l.tasks.forEach(t => {
+        if (t.scheduledDate) {
+          const sd = new Date(t.scheduledDate);
+          const sk = `${sd.getFullYear()}-${sd.getMonth()}-${sd.getDate()}`;
+          if (!schedMap[sk]) schedMap[sk] = [];
+          schedMap[sk].push({...t, _listId: l.id, _listName: getAutoName(l)});
+        }
+      });
+    });
+  }
+
   const key = `${y}-${m}-${d}`;
   const lists = dateMap[key] || [];
+  const scheduledTasks = schedMap[key] || [];
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const area = document.getElementById('calListArea');
-  if(!lists.length) {
-    area.innerHTML = `<div class="cal-date-heading">${d} ${monthNames[m]} ${y}</div><div style="font-size:0.8rem;color:var(--ink-faint);">No lists on this day.</div>`;
-    return;
-  }
+
   let html = `<div class="cal-date-heading">${d} ${monthNames[m]} ${y}</div>`;
-  lists.forEach(l => {
-    const done = l.tasks.filter(t=>t.done).length;
-    const total = l.tasks.length;
-    const pct = total ? Math.round((done/total)*100) : 0;
-    html += `<div class="cal-list-card" ontouchend="event.preventDefault();openCalList('${l.id}')" onclick="openCalList('${l.id}')">
-      <div class="cal-list-card-name">${getAutoName(l)}</div>
-      <div class="cal-list-card-meta">${total} tasks · ${done} done · ${pct}% ${l.inactive?'· Inactive':''}</div>
-    </div>`;
-  });
+
+  // ── SECTION 1: Lists written on this day ──
+  if (lists.length) {
+    html += `<div class="cal-section-label">📝 Written on this day</div>`;
+    lists.forEach(l => {
+      const done = l.tasks.filter(t=>t.done).length;
+      const total = l.tasks.length;
+      const pct = total ? Math.round((done/total)*100) : 0;
+      html += `<div class="cal-list-card" ontouchend="event.preventDefault();openCalList('${l.id}')" onclick="openCalList('${l.id}')">
+        <div class="cal-list-card-name">${getAutoName(l)}</div>
+        <div class="cal-list-card-meta">${total} tasks · ${done} done · ${pct}% ${l.inactive?'· Archived':''}</div>
+      </div>`;
+    });
+  }
+
+  // ── SECTION 2: Tasks scheduled for this day ──
+  if (scheduledTasks.length) {
+    html += `<div class="cal-section-label" style="color:var(--blue);">📅 Scheduled for this day</div>`;
+    scheduledTasks.forEach(t => {
+      const timeStr = new Date(t.scheduledDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const doneStyle = t.done ? 'text-decoration:line-through;opacity:0.5;' : '';
+      html += `<div class="cal-list-card" style="border-left:3px solid var(--blue);" ontouchend="event.preventDefault();openCalList('${t._listId}')" onclick="openCalList('${t._listId}')">
+        <div class="cal-list-card-name" style="${doneStyle}">${t.done ? '✓ ' : ''}${t.name}</div>
+        <div class="cal-list-card-meta">⏰ ${timeStr} · from: ${t._listName} · ${t.duration}m${t.tag ? ' · '+t.tag : ''}</div>
+      </div>`;
+    });
+  }
+
+  if (!lists.length && !scheduledTasks.length) {
+    html += `<div style="font-size:0.8rem;color:var(--ink-faint);">Nothing on this day.</div>`;
+  }
+
   area.innerHTML = html;
 }
 
