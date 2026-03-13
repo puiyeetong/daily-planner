@@ -209,6 +209,8 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .task-actions-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding: 6px 5px; border-left: 1px solid var(--border); background: var(--surface2); border-radius: 0 10px 10px 0; min-width: 42px; }
 .task-tags-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 3px; padding-left: 23px; }
 .task-meta-row { display: flex; align-items: center; gap: 5px; padding: 2px 8px 6px 30px; flex-wrap: wrap; }
+.task-dup-btn { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.85rem; padding: 1px 3px; transition: all 0.15s; }
+.task-dup-btn:hover { color: var(--rose); }
 .task-meta-minimal { padding: 1px 6px 4px; justify-content: flex-end; }
 .dur-tag { font-size: 0.64rem; color: var(--ink-dim); background: var(--surface2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
 .dur-tag:hover { border-color: var(--rose-dim); color: var(--rose); }
@@ -424,13 +426,14 @@ nav { background: var(--surface); border-bottom: 1px solid var(--border); displa
 .daily-mins-tag { font-size: 0.72rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; color: var(--ink-dim); }
 .daily-mins-tag strong { color: var(--ink); }
 .task-move-btn { background: none; border: 1px solid var(--border2); border-radius: 5px; color: var(--ink-dim); font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-.task-move-btn:hover { background: var(--blue); border-color: var(--blue); color: white; }
-.task-move-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+.task-move-btn:hover { border-color: var(--rose); color: var(--rose); }
+.task-move-btn.active { border-color: var(--rose); color: var(--rose); }
 .task-wa-btn { background: none; border: none; font-size: 0.8rem; cursor: pointer; padding: 2px 3px; opacity: 0.4; transition: opacity 0.15s; }
 .task-wa-btn:hover { opacity: 1; }
 .task-completed-at { font-size: 0.62rem; color: var(--green); font-weight: 600; opacity: 0.8; white-space: nowrap; }
-.list-item.move-target { background: rgba(122,158,194,0.15); border-color: var(--blue) !important; }
-.list-item.move-target .list-item-name { color: var(--blue); }
+.list-item.move-target { background: none; border-color: var(--border) !important; }
+.list-item.move-target .list-item-name { color: var(--ink); }
+.move-here-btn { background: none; border: none; color: var(--blue); font-size: 1.1rem; font-weight: 700; padding: 3px 6px; cursor: pointer; flex-shrink: 0; }
 
 /* MOVE TO BANNER */
 .move-banner { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--blue); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(58,51,48,0.18); font-family: 'Nunito', sans-serif; display: flex; align-items: center; gap: 10px; }
@@ -1640,6 +1643,7 @@ function taskHTML(t, i, list) {
 
   const isMoving = movingTaskId === t.id;
   const moveBtn = !isInactive ? `<button class="task-move-btn ${isMoving?'active':''}" onclick="startMoveTask('${t.id}')" title="Move to another list">${isMoving?'✕ Cancel':'Move to'}</button>` : '';
+  const dupBtn = !isInactive ? `<button class="task-dup-btn" onclick="duplicateTask('${t.id}')" title="Duplicate">⧉</button>` : '';
   const waBtn = `<button class="task-wa-btn" onclick="shareToWhatsApp('${t.id}')" title="Share to WhatsApp">💬</button>`;
   const completedAtHtml = t.done && t.completedAt
     ? `<span class="task-completed-at">✓ ${utc8(new Date(t.completedAt)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`
@@ -1662,6 +1666,7 @@ function taskHTML(t, i, list) {
           ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private">🔒</span>' : ''}
           ${waBtn}
           ${moveBtn}
+          ${dupBtn}
           ${delBtn}
         </div>` : `<div class="task-meta-row task-meta-minimal">
           ${delBtn}
@@ -1744,6 +1749,19 @@ function toggleStep(taskId, si) {
     }
   }
   save(); renderTasks(); updateProgress(); checkConfetti();
+}
+
+function duplicateTask(id) {
+  const list = getActiveList(); if (!list) return;
+  const t = list.tasks.find(t=>t.id===id); if (!t) return;
+  const copy = JSON.parse(JSON.stringify(t));
+  copy.id = 'task_' + Date.now();
+  copy.done = false;
+  delete copy.completedAt;
+  const idx = list.tasks.findIndex(t=>t.id===id);
+  list.tasks.splice(idx + 1, 0, copy);
+  save(); renderTasks();
+  toast('Task duplicated');
 }
 
 function deleteTask(id) {
@@ -2538,11 +2556,18 @@ function startMoveTask(taskId) {
   const btn = document.querySelector(`#ti_${taskId} .task-move-btn`);
   if (btn) btn.classList.add('active');
 
-  // Highlight sidebar list items as targets
-  renderSidebarMovMode();
+  // Auto-open sidebar (with overlay to block main area)
+  const sb = document.getElementById('mainSidebar');
+  if (sb && !sb.classList.contains('open')) {
+    sb.classList.add('open');
+    const ov = document.getElementById('sidebarOverlay');
+    ov.classList.add('on');
+    // One tap on overlay = cancel move (not just close sidebar)
+    ov.onclick = () => { cancelMove(); ov.onclick = null; };
+  }
 
-  // Show banner
-  showMoveBanner();
+  // Show move targets in sidebar
+  renderSidebarMovMode();
 }
 
 function renderSidebarMovMode() {
@@ -2576,7 +2601,7 @@ function listItemMoveHTML(l) {
       <div class="list-item-name">${isFrom ? '📌 '+name : name}</div>
       <div class="list-item-meta">${l.tasks.length} task${l.tasks.length!==1?'s':''} · ${l.inactive?'Inactive':'Active'}</div>
     </div>
-    ${canDrop ? '<div style="font-size:0.7rem;color:var(--blue);font-weight:700;flex-shrink:0;">Paste here</div>' : ''}
+    ${canDrop ? `<button class="move-here-btn" onclick="event.stopPropagation();dropTaskToList('${l.id}')">←</button>` : ''}
   </div>`;
 }
 
@@ -2617,6 +2642,10 @@ function cancelMove() {
   movingTaskId = null;
   movingFromListId = null;
   removeBanner();
+  // Close sidebar and reset overlay
+  document.getElementById('mainSidebar')?.classList.remove('open');
+  const ov = document.getElementById('sidebarOverlay');
+  if (ov) { ov.classList.remove('on'); ov.onclick = () => toggleSidebar(); }
   renderSidebar();
   renderTasks();
 }
