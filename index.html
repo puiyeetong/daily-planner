@@ -1142,6 +1142,7 @@ function sbUserKey() {
 }
 
 async function syncToCloud() {
+  if (location.protocol === 'file:') return; // never sync when opened as local file
   if (!S.supabase?.url || !S.supabase?.key) return;
   try {
     const userKey = sbUserKey();
@@ -1171,6 +1172,7 @@ async function syncToCloud() {
 }
 
 async function syncFromCloud() {
+  if (location.protocol === 'file:') return; // never sync when opened as local file
   if (!S.supabase?.url || !S.supabase?.key) return;
   try {
     const userKey = sbUserKey();
