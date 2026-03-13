@@ -1667,7 +1667,8 @@ function taskHTML(t, i, list) {
   const isMoving = movingTaskId === t.id;
   const moveBtn = !isInactive ? `<button class="task-move-btn ${isMoving?'active':''}" onclick="startMoveTask('${t.id}')" title="Move to another list">${isMoving?'✕ Cancel':'Move to'}</button>` : '';
   const dupBtn = !isInactive ? `<button class="task-dup-btn" onclick="duplicateTask('${t.id}')" title="Duplicate">⧉</button>` : '';
-  const waBtn = `<button class="task-wa-btn" onclick="shareToWhatsApp('${t.id}')" title="Share to WhatsApp">💬</button>`;
+  const waBtn = `<button class="task-wa-btn" onclick="shareToWhatsApp('${t.id}')" title="Share as message">💬</button>`;
+  const waListBtn = !t.steps?.length ? '' : `<button class="task-wa-btn" onclick="shareTaskList('${t.id}')" title="Share as list">📋</button>`;
   const completedAtHtml = t.done && t.completedAt
     ? `<span class="task-completed-at">✓ ${utc8(new Date(t.completedAt)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`
     : '';
@@ -1688,6 +1689,7 @@ function taskHTML(t, i, list) {
           ${completedAtHtml}
           ${t.isManual && S.manualPrivate ? '<span class="task-lock-badge" title="Private">🔒</span>' : ''}
           ${waBtn}
+          ${waListBtn}
           ${moveBtn}
           ${dupBtn}
           ${delBtn}
@@ -2720,6 +2722,19 @@ async function shareToWhatsApp(taskId) {
   if (waBtn) { waBtn.textContent = '💬'; waBtn.disabled = false; }
 }
 
+function shareTaskList(taskId) {
+  const list = getActiveList(); if (!list) return;
+  const t = list.tasks.find(t=>t.id===taskId); if (!t) return;
+  const tagEmojis = {work:'💼',admin:'📋',wellness:'🌿',kids:'👧',home:'🏠'};
+  const emoji = tagEmojis[t.tag] || '';
+  const dur = t.duration ? ` _(${t.duration}m)_` : '';
+  let text = `${emoji ? emoji+' ' : ''}*${t.name}*${dur}`;
+  if (t.steps?.length) {
+    text += '\n\n' + t.steps.map(s => `• ${s}`).join('\n');
+  }
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+}
+
 
 function changeTaskTag(taskId, event) {
   event.stopPropagation();
@@ -3117,7 +3132,7 @@ function renderCalendar() {
     const isToday = now.getFullYear()===calYear && now.getMonth()===calMonth && now.getDate()===d;
     const isSelected = calSelectedDate && calSelectedDate.y===calYear && calSelectedDate.m===calMonth && calSelectedDate.d===d;
     const minsToday = dateMins[key] || 0;
-    const minsLabel = minsToday > 0 ? `<div class="cal-mins">${minsToday>=60?Math.floor(minsToday/60)+'h'+(minsToday%60?minsToday%60+'m':''):minsToday+'m'}</div>` : '';
+    const minsLabel = minsToday > 0 ? `<div class="cal-mins">${minsToday>=60?Math.floor(minsToday/60)+'h'+(minsToday%60?' '+minsToday%60+'m':''):minsToday+'m'}</div>` : '';
     html += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${hasList?'has-list':''}" ontouchend="event.preventDefault();selectCalDay(${calYear},${calMonth},${d})" onclick="selectCalDay(${calYear},${calMonth},${d})">
       <div class="cal-day-num">${d}</div>
       ${hasList?'<div class="cal-dot"></div>':''}
